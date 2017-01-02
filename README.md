@@ -82,6 +82,18 @@ and customized as needed. The example below includes an MIT license:
   }
 }
 ```
+Additional built-in parameters:
+
+Param         |  Result 
+--------------|---------------------
+${year}       | 2017
+${month}      | 1
+${day}        | 2
+${timestamp}  | 2017-01-02 15:17:40
+${time24h}    | 15:17:40
+${date}       | 2017-01-02
+${time}       | 3:17:40 PM
+
 
 ## Notes 
 * If you do not want an asterisk preceding each line of a comment, replace the `commentprefix` property with `"  "`. 
