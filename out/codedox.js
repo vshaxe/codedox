@@ -722,13 +722,14 @@ var vscode_Selection = require("vscode").Selection;
 var wiggin_codedox_CodeDox = function(context) {
 	this.m_fileHeader = null;
 	this.m_commenter = null;
+	var config = Vscode.workspace.getConfiguration("codedox");
+	config.get("firstrun",-1);
 	context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void) {
 		wiggin_codedox_CodeDox.s_settings = null;
 	}));
 	context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument($bind(this,this.onTextChange)));
 	this.registerTextEditorCommand(context,"codedox" + ".fileheader" + ".insert",$bind(this,this.insertFileHeader));
 	this.registerTextEditorCommand(context,"codedox" + ".comment" + ".insert",$bind(this,this.insertComment));
-	var config = Vscode.workspace.getConfiguration("codedox");
 	var bAutoPrefixOnEnter = config.get("autoPrefixOnEnter",false);
 	var strCommentPrefix = config.get("commentprefix","*  ");
 	if(bAutoPrefixOnEnter) {
@@ -745,10 +746,10 @@ wiggin_codedox_CodeDox.getSettings = function() {
 		var strCommentBegin = config.get("commentbegin","/**");
 		var strHeaderBegin = config.get("headerbegin","/*");
 		var strAutoClose = wiggin_codedox_CodeDox.getAutoClosingClose(strCommentBegin);
-		var tmp = config.get("autoInsert",false);
+		var tmp = config.get("autoInsert",true);
 		var tmp1 = config.get("commentend","*/");
 		var tmp2 = config.get("commentprefix","*  ");
-		var tmp3 = config.get("commentdescription","");
+		var tmp3 = config.get("commentdescription","[Description]");
 		var tmp4 = wiggin_util_StringUtil.right(strCommentBegin,1);
 		var tmp5 = config.get("headerbegin","/*");
 		var tmp6 = config.get("headerend","*/");
@@ -762,6 +763,8 @@ wiggin_codedox_CodeDox.getAutoClosingClose = function(strAutoClosingOpen) {
 	} else {
 		return wiggin_util_StringUtil.reverse(strAutoClosingOpen);
 	}
+};
+wiggin_codedox_CodeDox.initFirstRun = function(config) {
 };
 wiggin_codedox_CodeDox.prototype = {
 	registerTextEditorCommand: function(context,strCmd,callback) {
@@ -777,7 +780,7 @@ wiggin_codedox_CodeDox.prototype = {
 		} catch( e ) {
 			haxe_CallStack.lastException = e;
 			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			this.handleError("Exception caught inserting file header: ",e,haxe_CallStack.exceptionStack());
+			this.handleError("Error inserting file header: ",e,haxe_CallStack.exceptionStack());
 		}
 	}
 	,insertComment: function(editor,edit) {
@@ -792,7 +795,7 @@ wiggin_codedox_CodeDox.prototype = {
 		} catch( e ) {
 			haxe_CallStack.lastException = e;
 			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			this.handleError("Exception caught inserting comment: ",e,haxe_CallStack.exceptionStack());
+			this.handleError("Error inserting comment: ",e,haxe_CallStack.exceptionStack());
 		}
 	}
 	,onTextChange: function(evt) {
@@ -833,7 +836,7 @@ wiggin_codedox_CodeDox.prototype = {
 		} catch( e ) {
 			haxe_CallStack.lastException = e;
 			if (e instanceof js__$Boot_HaxeError) e = e.val;
-			this.handleError("Exception caught `onTextChange`: ",e,haxe_CallStack.exceptionStack());
+			this.handleError("",e,haxe_CallStack.exceptionStack());
 		}
 	}
 	,doHeaderInsert: function(line,editor) {
@@ -1022,7 +1025,7 @@ wiggin_codedox_FileHeader.prototype = {
 			template = config.get("codedox" + ".fileheader" + ".templates" + ".*",null);
 		}
 		if(template == null || template.length == 0) {
-			throw new js__$Boot_HaxeError("No template defined for " + strLang + ".");
+			throw new js__$Boot_HaxeError("No template defined for " + strLang + ".  Please see README for help setting up this feature.");
 		}
 		return template.join("\n");
 	}

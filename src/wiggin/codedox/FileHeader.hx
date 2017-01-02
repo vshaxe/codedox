@@ -109,7 +109,7 @@ class FileHeader
 
 		if(template == null || template.length == 0)
 		{
-			throw "No template defined for " + strLang + ".";
+			throw "No template defined for " + strLang + ".  Please see README for help setting up this feature.";
 		}
 		return template.join("\n");
 	}

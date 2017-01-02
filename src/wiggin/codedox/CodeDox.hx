@@ -78,6 +78,13 @@ class CodeDox
 		m_fileHeader = null;
 		m_commenter = null;
 
+		// Check for first run.
+		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(EXTENSION_NAME);
+		if(config.get("firstrun", -1) == -1)
+		{
+			initFirstRun(config);
+		}
+
 		context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void){s_settings=null;}));
 		context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument(onTextChange));
 
@@ -85,7 +92,6 @@ class CodeDox
 		registerTextEditorCommand(context, CMD_INSERT_COMMENT, insertComment);
 
 		// Add onEnter rules.
-		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(EXTENSION_NAME);
 		var bAutoPrefixOnEnter = config.get("autoPrefixOnEnter", false);
 		var strCommentPrefix = config.get("commentprefix", "*  ");
 		if(bAutoPrefixOnEnter)
@@ -163,7 +169,7 @@ class CodeDox
 		}
 		catch(e:Dynamic)
 		{
-			handleError("Exception caught inserting file header: ", e, haxe.CallStack.exceptionStack());
+			handleError("Error inserting file header: ", e, haxe.CallStack.exceptionStack());
 		}
 	}
 
@@ -188,7 +194,7 @@ class CodeDox
 		}
 		catch(e:Dynamic)
 		{
-			handleError("Exception caught inserting comment: ", e, haxe.CallStack.exceptionStack());
+			handleError("Error inserting comment: ", e, haxe.CallStack.exceptionStack());
 		}
 	}
 
@@ -253,7 +259,7 @@ class CodeDox
 		}
 		catch(e:Dynamic)
 		{
-			handleError("Exception caught `onTextChange`: ", e, haxe.CallStack.exceptionStack());
+			handleError("", e, haxe.CallStack.exceptionStack());
 		}
 	}
 
@@ -349,11 +355,11 @@ class CodeDox
 			var strAutoClose = getAutoClosingClose(strCommentBegin);
 
 			s_settings = {
-				autoInsert: config.get("autoInsert", false),
+				autoInsert: config.get("autoInsert", true),
 				strCommentBegin: strCommentBegin,
 				strCommentEnd: config.get("commentend", "*/"),
 				strCommentPrefix: config.get("commentprefix", "*  "),
-				strCommentDescription: config.get("commentdescription", ""),
+				strCommentDescription: config.get("commentdescription", "[Description]"),
 				strCommentTrigger: StringUtil.right(strCommentBegin, 1),
 				strAutoClosingClose: (strAutoClose != null) ? strAutoClose : "",
 				strHeaderBegin: config.get("headerbegin", "/*"),
@@ -389,6 +395,19 @@ class CodeDox
 			// Just reverse the open until we can read the real value??
 			default: StringUtil.reverse(strAutoClosingOpen);  
 		}
+	}
+
+	/**
+	 *  Called when the extension is run for the first time. Here we persist a default config
+	 *  so the user doesn't have to. 
+	 *  e.g. "\**" is usually closed with "*\".
+	 *  
+	 *  @param strAutoClosingOpen - the opening string of an autoclosing pair
+	 *  @return String or null
+	 */
+	private static function initFirstRun(config:WorkspaceConfiguration) : Void
+	{
+
 	}
 
 } // end of CodeDox class
