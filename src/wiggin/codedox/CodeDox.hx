@@ -64,6 +64,9 @@ class CodeDox
 	/** Settings, lazy fetched */
 	private static var s_settings:Settings = null;
 
+	/** Path to extension installation. **/
+	private static var s_extPath:String = null;
+
 	/** FileHeader inserter, lazy initialized */
 	private var m_fileHeader:FileHeader;
 
@@ -77,6 +80,7 @@ class CodeDox
 	{
 		m_fileHeader = null;
 		m_commenter = null;
+		s_extPath = context.extensionPath;
 
 		// Check for first run.
 		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(EXTENSION_NAME);
@@ -92,7 +96,7 @@ class CodeDox
 		registerTextEditorCommand(context, CMD_INSERT_COMMENT, insertComment);
 
 		// Add onEnter rules.
-		var bAutoPrefixOnEnter = config.get("autoPrefixOnEnter", false);
+		var bAutoPrefixOnEnter = config.get("autoPrefixOnEnter", true);
 		var strCommentPrefix = config.get("commentprefix", "*  ");
 		if(bAutoPrefixOnEnter)
 		{
@@ -316,12 +320,15 @@ class CodeDox
 		strMsg = StringUtil.hasChars(strMsg) ? strMsg : "";
 		var strExp = (exp != null) ? Std.string(exp) : "";
 
-		Vscode.window.showErrorMessage(strMsg + strExp);
-
-		trace(strMsg + strExp);
-		if(stack != null)
+		if(StringUtil.hasChars(strMsg) || StringUtil.hasChars(strExp))
 		{
-			trace(haxe.CallStack.toString(stack));
+			Vscode.window.showErrorMessage(strMsg + strExp);
+
+			trace(strMsg + strExp);
+			if(stack != null)
+			{
+				trace(haxe.CallStack.toString(stack));
+			}
 		}
 	}
 
@@ -369,6 +376,15 @@ class CodeDox
 			};
 		}
 		return s_settings;
+	}
+
+	/**
+	 *  Returns the full path where this extension is installed.
+	 *  @return String - null if extension not yet activated
+	 */
+	public static function getExtPath() : String
+	{
+		return s_extPath;
 	}
 
 	/**

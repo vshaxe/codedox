@@ -11,8 +11,11 @@
             ],
             "stopOnEntry": false,
             "sourceMaps": true,
-            "outDir": "${workspaceRoot}",
-			"preLaunchTask": "haxe"
+            "outFiles": [
+				"${workspaceRoot}/out/**/*.js"
+			],
+			"preLaunchTask": "haxe",
+			"smartStep": true
         }
     ]
 }

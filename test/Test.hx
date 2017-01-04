@@ -1,4 +1,3 @@
-
 package ;
 
 class Test
@@ -10,6 +9,12 @@ class Test
 		trace(getMessage("Hello", 2));
 	}
 
+	/**
+	 *  [Description]
+	 *  @param str - 
+	 *  @param num - 
+	 *  @return String
+	 */
 	private static function getMessage(str:String, num:Int) : String
 	{
 		return "message: " + str + num;

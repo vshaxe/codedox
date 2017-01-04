@@ -27,8 +27,13 @@ import vscode.TextEditorEdit;
 import vscode.Position;
 import vscode.TextLine;
 import vscode.Range;
+import vscode.MessageItem;
+import vscode.QuickPickItem;
 import wiggin.util.JsonUtil;
 import wiggin.util.RegExUtil;
+import wiggin.util.ConfigUtil;
+
+typedef License = {name:String, description:String, text:Array<String>}
 
 /**
  *  Implements command for inserting file header at top of files.
@@ -62,7 +67,7 @@ class FileHeader
 		var doc = editor.document;
 		var range = new Range(doc.positionAt(0), doc.positionAt(str.length));
 		var strDoc = doc.getText(range);
-		if(strDoc != str)
+		if(str.length == 0 || strDoc != str)
 		{
 			if(line != null)
 			{
@@ -109,7 +114,26 @@ class FileHeader
 
 		if(template == null || template.length == 0)
 		{
-			throw "No template defined for " + strLang + ".  Please see README for help setting up this feature.";
+			if(config.get(CodeDox.EXTENSION_NAME + ".neverAskTemplate", false))
+			{
+				throw "";  // Abort the insert, but don't display an error.
+			}
+		
+			var msg = CodeDox.EXTENSION_NAME + ": No template defined for " + strLang + ". Would you like to configure this feature?";
+			var item1:MessageItem = {title:"Yes"};
+			var item2:MessageItem = {title:"No", isCloseAffordance:true};
+			var item3:MessageItem = {title:"Never"};
+			Vscode.window.showErrorMessage(msg, item1, item2, item3).then(function(item:MessageItem){
+				if(item.title == item1.title)
+				{
+					pickDefaultLicense(config);
+				}
+				else if(item.title == item3.title)
+				{
+					setNeverAsk(config);	
+				}
+			});
+			template = [""]; // This will erase what the user typed.
 		}
 		return template.join("\n");
 	}
@@ -162,7 +186,7 @@ class FileHeader
 	 *  @param map - the map to populate.
 	 *  @param config - the `WorkspaceConfiguration` containing settings
 	 */
-	private function addDefaultParams(map:Map<String,Dynamic>, config:WorkspaceConfiguration) : Void
+	private static function addDefaultParams(map:Map<String,Dynamic>, config:WorkspaceConfiguration) : Void
 	{
 		var date = Date.now();
 
@@ -184,6 +208,24 @@ class FileHeader
 		setIfAbsent(map, "headerbegin", settings.strHeaderBegin);
 		setIfAbsent(map, "headerprefix", settings.strHeaderPrefix);
 		setIfAbsent(map, "headerend", settings.strHeaderEnd);
+
+		addDefaultLicenses(map);
+	}
+
+	/**
+	 *  Adds the default parameters to `map`. Default params are things like
+	 *  current year, date, time, etc. 
+	 *
+	 *  @param map - the map to populate.
+	 *  @param config - the `WorkspaceConfiguration` containing settings
+	 */
+	private static function addDefaultLicenses(map:Map<String,Dynamic>) : Void
+	{
+		var arr:Array<License> = getDefaultLicenses();
+		for(license in arr)
+		{
+			setIfAbsent(map, license.name, license.text.join("\n"));
+		}
 	}
 
 	/**
@@ -193,7 +235,7 @@ class FileHeader
 	 *  @param strKey - the key to check
 	 *  @param strValue - the value to set
 	 */
-	private inline function setIfAbsent(map:Map<String,Dynamic>, strKey:String, strValue:String) : Void
+	private static inline function setIfAbsent(map:Map<String,Dynamic>, strKey:String, strValue:String) : Void
 	{
 		if(!map.exists(strKey))
 		{
@@ -238,6 +280,73 @@ class FileHeader
 			}
 		}
 		return map;
+	}
+
+	/**
+	 *  Reads the default license definitions from a file.
+	 *  @return Array<License>
+	 */
+	private static function getDefaultLicenses() : Array<License>
+	{
+		var str = sys.io.File.getContent(CodeDox.getExtPath() + "/defaultlicenses.json");
+		var arr:Array<License> = haxe.Json.parse(str);
+		return arr;
+	}
+
+	/**
+	 *  Allows the user to select a default license.
+	 *  @param config - the `WorkspaceConfiguration`
+	 */
+	private static function pickDefaultLicense(config:WorkspaceConfiguration) : Void
+	{
+		var arr:Array<License> = getDefaultLicenses();
+
+		// Create list of available built-in licenses.
+		var items:Array<QuickPickItem> = [];
+		for(license in arr)
+		{
+			items.push({label:license.description, description:license.name});
+		}
+
+		Vscode.window.showQuickPick(items, {placeHolder:"Select a default license"}).then(function (item:QuickPickItem) {	
+			if(item != null)
+			{
+				setDefaultTemplate(item.description, config);	
+			}
+		});
+	}
+
+	/**
+	 *  Updates the user's config with the specified default template.
+	 *  @param strLicense - name of the built-in license param
+	 *  @param config - the `WorkspaceConfiguration` to write to
+	 */
+	private static function setDefaultTemplate(strLicense:String, config:WorkspaceConfiguration) : Void
+	{
+		trace("Setting default license to: " + strLicense);
+	}
+
+	/**
+	 *  Updates the user's config so that it will never offer to choose a default template.
+	 *  @param config - the `WorkspaceConfiguration` to write to
+	 */
+	private static function setNeverAsk(config:WorkspaceConfiguration) : Void
+	{
+		ConfigUtil.updateConfig(config, CodeDox.EXTENSION_NAME, "neverAskTemplate", true).then(
+			function(Void)
+			{
+				#if debug
+				trace(CodeDox.EXTENSION_NAME + ".neverAskTemplate set to true.");
+				#end
+			}, 
+			function(result)
+			{
+				#if debug
+				trace("Failed to set " + CodeDox.EXTENSION_NAME + ".neverAskTemplate");
+				trace(result);
+				#end
+			}
+		);
 	}
 
 } // end of FileHeader class

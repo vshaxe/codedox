@@ -189,6 +189,13 @@ Reflect.fields = function(o) {
 	}
 	return a;
 };
+Reflect.deleteField = function(o,field) {
+	if(!Object.prototype.hasOwnProperty.call(o,field)) {
+		return false;
+	}
+	delete(o[field]);
+	return true;
+};
 var Std = function() { };
 Std.__name__ = true;
 Std.string = function(s) {
@@ -499,6 +506,11 @@ haxe_ds_StringMap.prototype = {
 	}
 	,__class__: haxe_ds_StringMap
 };
+var haxe_io_Bytes = function() { };
+haxe_io_Bytes.__name__ = true;
+haxe_io_Bytes.prototype = {
+	__class__: haxe_io_Bytes
+};
 var js__$Boot_HaxeError = function(val) {
 	Error.call(this);
 	this.val = val;
@@ -715,6 +727,8 @@ js_Boot.__isNativeObj = function(o) {
 js_Boot.__resolveNativeClass = function(name) {
 	return $global[name];
 };
+var js_node_Fs = require("fs");
+var js_node_buffer_Buffer = require("buffer").Buffer;
 var vscode__$IndentAction_IndentAction_$Impl_$ = require("vscode").IndentAction;
 var vscode_Position = require("vscode").Position;
 var vscode_Range = require("vscode").Range;
@@ -722,6 +736,7 @@ var vscode_Selection = require("vscode").Selection;
 var wiggin_codedox_CodeDox = function(context) {
 	this.m_fileHeader = null;
 	this.m_commenter = null;
+	wiggin_codedox_CodeDox.s_extPath = context.extensionPath;
 	var config = Vscode.workspace.getConfiguration("codedox");
 	config.get("firstrun",-1);
 	context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void) {
@@ -730,7 +745,7 @@ var wiggin_codedox_CodeDox = function(context) {
 	context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument($bind(this,this.onTextChange)));
 	this.registerTextEditorCommand(context,"codedox" + ".fileheader" + ".insert",$bind(this,this.insertFileHeader));
 	this.registerTextEditorCommand(context,"codedox" + ".comment" + ".insert",$bind(this,this.insertComment));
-	var bAutoPrefixOnEnter = config.get("autoPrefixOnEnter",false);
+	var bAutoPrefixOnEnter = config.get("autoPrefixOnEnter",true);
 	var strCommentPrefix = config.get("commentprefix","*  ");
 	if(bAutoPrefixOnEnter) {
 		Vscode.languages.setLanguageConfiguration("haxe",{ onEnterRules : [{ beforeText : new RegExp("^\\s*\\/\\*\\*(?!\\/)([^\\*]|\\*(?!\\/))*$"), afterText : new RegExp("^\\s*\\*\\/$"), action : { indentAction : vscode__$IndentAction_IndentAction_$Impl_$.IndentOutdent, appendText : " " + strCommentPrefix}},{ beforeText : new RegExp("^\\s*\\/\\*\\*(?!\\/)([^\\*]|\\*(?!\\/))*$"), action : { indentAction : vscode__$IndentAction_IndentAction_$Impl_$.None, appendText : " " + strCommentPrefix}},{ beforeText : new RegExp("^(\\t|(\\ \\ ))*\\ \\*(\\ ([^\\*]|\\*(?!\\/))*)?$"), action : { indentAction : vscode__$IndentAction_IndentAction_$Impl_$.None, appendText : strCommentPrefix}},{ beforeText : new RegExp("^(\\t|(\\ \\ ))*\\ \\*\\/\\s*$"), action : { indentAction : vscode__$IndentAction_IndentAction_$Impl_$.None, removeText : 1}},{ beforeText : new RegExp("^(\\t|(\\ \\ ))*\\ \\*[^/]*\\*\\/\\s*$"), action : { indentAction : vscode__$IndentAction_IndentAction_$Impl_$.None, removeText : 1}}]});
@@ -756,6 +771,9 @@ wiggin_codedox_CodeDox.getSettings = function() {
 		wiggin_codedox_CodeDox.s_settings = { autoInsert : tmp, strCommentBegin : strCommentBegin, strCommentEnd : tmp1, strCommentPrefix : tmp2, strCommentDescription : tmp3, strCommentTrigger : tmp4, strAutoClosingClose : strAutoClose != null ? strAutoClose : "", strHeaderBegin : tmp5, strHeaderEnd : tmp6, strHeaderPrefix : config.get("headerprefix"," *"), strHeaderTrigger : wiggin_util_StringUtil.right(strHeaderBegin,1)};
 	}
 	return wiggin_codedox_CodeDox.s_settings;
+};
+wiggin_codedox_CodeDox.getExtPath = function() {
+	return wiggin_codedox_CodeDox.s_extPath;
 };
 wiggin_codedox_CodeDox.getAutoClosingClose = function(strAutoClosingOpen) {
 	if(strAutoClosingOpen == "/**") {
@@ -864,10 +882,12 @@ wiggin_codedox_CodeDox.prototype = {
 			strMsg = "";
 		}
 		var strExp = exp != null ? Std.string(exp) : "";
-		Vscode.window.showErrorMessage(strMsg + strExp);
-		console.log(strMsg + strExp);
-		if(stack != null) {
-			console.log(haxe_CallStack.toString(stack));
+		if(strMsg != null && strMsg.length > 0 || strExp != null && strExp.length > 0) {
+			Vscode.window.showErrorMessage(strMsg + strExp);
+			console.log(strMsg + strExp);
+			if(stack != null) {
+				console.log(haxe_CallStack.toString(stack));
+			}
 		}
 	}
 	,isLangaugeSupported: function(strLangId) {
@@ -996,13 +1016,179 @@ wiggin_codedox_Commenter.prototype = {
 var wiggin_codedox_FileHeader = function() {
 };
 wiggin_codedox_FileHeader.__name__ = true;
+wiggin_codedox_FileHeader.addDefaultParams = function(map,config) {
+	var date = new Date();
+	var strValue = Std.string(date.getFullYear());
+	if(!(__map_reserved["year"] != null ? map.existsReserved("year") : map.h.hasOwnProperty("year"))) {
+		if(__map_reserved["year"] != null) {
+			map.setReserved("year",strValue);
+		} else {
+			map.h["year"] = strValue;
+		}
+	}
+	var strValue1 = Std.string(date.getMonth() + 1);
+	if(!(__map_reserved["month"] != null ? map.existsReserved("month") : map.h.hasOwnProperty("month"))) {
+		if(__map_reserved["month"] != null) {
+			map.setReserved("month",strValue1);
+		} else {
+			map.h["month"] = strValue1;
+		}
+	}
+	var strValue2 = Std.string(date.getDate());
+	if(!(__map_reserved["day"] != null ? map.existsReserved("day") : map.h.hasOwnProperty("day"))) {
+		if(__map_reserved["day"] != null) {
+			map.setReserved("day",strValue2);
+		} else {
+			map.h["day"] = strValue2;
+		}
+	}
+	var strValue3 = HxOverrides.dateStr(date);
+	if(!(__map_reserved["timestamp"] != null ? map.existsReserved("timestamp") : map.h.hasOwnProperty("timestamp"))) {
+		if(__map_reserved["timestamp"] != null) {
+			map.setReserved("timestamp",strValue3);
+		} else {
+			map.h["timestamp"] = strValue3;
+		}
+	}
+	var strValue4 = DateTools.format(date,"%T");
+	if(!(__map_reserved["time24h"] != null ? map.existsReserved("time24h") : map.h.hasOwnProperty("time24h"))) {
+		if(__map_reserved["time24h"] != null) {
+			map.setReserved("time24h",strValue4);
+		} else {
+			map.h["time24h"] = strValue4;
+		}
+	}
+	var strValue5 = DateTools.format(date,"%F");
+	if(!(__map_reserved["date"] != null ? map.existsReserved("date") : map.h.hasOwnProperty("date"))) {
+		if(__map_reserved["date"] != null) {
+			map.setReserved("date",strValue5);
+		} else {
+			map.h["date"] = strValue5;
+		}
+	}
+	var strValue6 = DateTools.format(date,"%l:%M:%S %p");
+	if(!(__map_reserved["time"] != null ? map.existsReserved("time") : map.h.hasOwnProperty("time"))) {
+		if(__map_reserved["time"] != null) {
+			map.setReserved("time",strValue6);
+		} else {
+			map.h["time"] = strValue6;
+		}
+	}
+	var settings = wiggin_codedox_CodeDox.getSettings();
+	var strValue7 = settings.strCommentBegin;
+	if(!(__map_reserved["commentbegin"] != null ? map.existsReserved("commentbegin") : map.h.hasOwnProperty("commentbegin"))) {
+		if(__map_reserved["commentbegin"] != null) {
+			map.setReserved("commentbegin",strValue7);
+		} else {
+			map.h["commentbegin"] = strValue7;
+		}
+	}
+	var strValue8 = settings.strCommentPrefix;
+	if(!(__map_reserved["commentprefix"] != null ? map.existsReserved("commentprefix") : map.h.hasOwnProperty("commentprefix"))) {
+		if(__map_reserved["commentprefix"] != null) {
+			map.setReserved("commentprefix",strValue8);
+		} else {
+			map.h["commentprefix"] = strValue8;
+		}
+	}
+	var strValue9 = settings.strCommentEnd;
+	if(!(__map_reserved["commentend"] != null ? map.existsReserved("commentend") : map.h.hasOwnProperty("commentend"))) {
+		if(__map_reserved["commentend"] != null) {
+			map.setReserved("commentend",strValue9);
+		} else {
+			map.h["commentend"] = strValue9;
+		}
+	}
+	var strValue10 = settings.strHeaderBegin;
+	if(!(__map_reserved["headerbegin"] != null ? map.existsReserved("headerbegin") : map.h.hasOwnProperty("headerbegin"))) {
+		if(__map_reserved["headerbegin"] != null) {
+			map.setReserved("headerbegin",strValue10);
+		} else {
+			map.h["headerbegin"] = strValue10;
+		}
+	}
+	var strValue11 = settings.strHeaderPrefix;
+	if(!(__map_reserved["headerprefix"] != null ? map.existsReserved("headerprefix") : map.h.hasOwnProperty("headerprefix"))) {
+		if(__map_reserved["headerprefix"] != null) {
+			map.setReserved("headerprefix",strValue11);
+		} else {
+			map.h["headerprefix"] = strValue11;
+		}
+	}
+	var strValue12 = settings.strHeaderEnd;
+	if(!(__map_reserved["headerend"] != null ? map.existsReserved("headerend") : map.h.hasOwnProperty("headerend"))) {
+		if(__map_reserved["headerend"] != null) {
+			map.setReserved("headerend",strValue12);
+		} else {
+			map.h["headerend"] = strValue12;
+		}
+	}
+	wiggin_codedox_FileHeader.addDefaultLicenses(map);
+};
+wiggin_codedox_FileHeader.addDefaultLicenses = function(map) {
+	var arr = wiggin_codedox_FileHeader.getDefaultLicenses();
+	var _g = 0;
+	while(_g < arr.length) {
+		var license = arr[_g];
+		++_g;
+		var strKey = license.name;
+		var strValue = license.text.join("\n");
+		if(!(__map_reserved[strKey] != null ? map.existsReserved(strKey) : map.h.hasOwnProperty(strKey))) {
+			if(__map_reserved[strKey] != null) {
+				map.setReserved(strKey,strValue);
+			} else {
+				map.h[strKey] = strValue;
+			}
+		}
+	}
+};
+wiggin_codedox_FileHeader.setIfAbsent = function(map,strKey,strValue) {
+	if(!(__map_reserved[strKey] != null ? map.existsReserved(strKey) : map.h.hasOwnProperty(strKey))) {
+		if(__map_reserved[strKey] != null) {
+			map.setReserved(strKey,strValue);
+		} else {
+			map.h[strKey] = strValue;
+		}
+	}
+};
+wiggin_codedox_FileHeader.getDefaultLicenses = function() {
+	var str = js_node_Fs.readFileSync(wiggin_codedox_CodeDox.getExtPath() + "/defaultlicenses.json",{ encoding : "utf8"});
+	var arr = JSON.parse(str);
+	return arr;
+};
+wiggin_codedox_FileHeader.pickDefaultLicense = function(config) {
+	var arr = wiggin_codedox_FileHeader.getDefaultLicenses();
+	var items = [];
+	var _g = 0;
+	while(_g < arr.length) {
+		var license = arr[_g];
+		++_g;
+		items.push({ label : license.description, description : license.name});
+	}
+	Vscode.window.showQuickPick(items,{ placeHolder : "Select a default license"}).then(function(item) {
+		if(item != null) {
+			wiggin_codedox_FileHeader.setDefaultTemplate(item.description,config);
+		}
+	});
+};
+wiggin_codedox_FileHeader.setDefaultTemplate = function(strLicense,config) {
+	console.log("Setting default license to: " + strLicense);
+};
+wiggin_codedox_FileHeader.setNeverAsk = function(config) {
+	wiggin_util_ConfigUtil.updateConfig(config,"codedox","neverAskTemplate",true).then(function(Void) {
+		console.log("codedox" + ".neverAskTemplate set to true.");
+	},function(result) {
+		console.log("Failed to set " + "codedox" + ".neverAskTemplate");
+		console.log(result);
+	});
+};
 wiggin_codedox_FileHeader.prototype = {
 	insertFileHeader: function(line,editor,edit) {
 		var str = this.getFileHeader(editor.document.languageId);
 		var doc = editor.document;
 		var range = new vscode_Range(doc.positionAt(0),doc.positionAt(str.length));
 		var strDoc = doc.getText(range);
-		if(strDoc != str) {
+		if(str.length == 0 || strDoc != str) {
 			if(line != null) {
 				edit.replace(line.rangeIncludingLineBreak,str);
 			} else {
@@ -1025,7 +1211,21 @@ wiggin_codedox_FileHeader.prototype = {
 			template = config.get("codedox" + ".fileheader" + ".templates" + ".*",null);
 		}
 		if(template == null || template.length == 0) {
-			throw new js__$Boot_HaxeError("No template defined for " + strLang + ".  Please see README for help setting up this feature.");
+			if(config.get("codedox" + ".neverAskTemplate",false)) {
+				throw new js__$Boot_HaxeError("");
+			}
+			var msg = "codedox" + ": No template defined for " + strLang + ". Would you like to configure this feature?";
+			var item1 = { title : "Yes"};
+			var item2 = { title : "No", isCloseAffordance : true};
+			var item3 = { title : "Never"};
+			Vscode.window.showErrorMessage(msg,item1,item2,item3).then(function(item) {
+				if(item.title == item1.title) {
+					wiggin_codedox_FileHeader.pickDefaultLicense(config);
+				} else if(item.title == item3.title) {
+					wiggin_codedox_FileHeader.setNeverAsk(config);
+				}
+			});
+			template = [""];
 		}
 		return template.join("\n");
 	}
@@ -1047,7 +1247,7 @@ wiggin_codedox_FileHeader.prototype = {
 		} else {
 			mapParams = new haxe_ds_StringMap();
 		}
-		this.addDefaultParams(mapParams,config);
+		wiggin_codedox_FileHeader.addDefaultParams(mapParams,config);
 		var mapParamsNorm = this.normalizeParams(mapParams);
 		var bChanged = true;
 		var strChanged;
@@ -1068,123 +1268,6 @@ wiggin_codedox_FileHeader.prototype = {
 			}
 		}
 		return strTemplate;
-	}
-	,addDefaultParams: function(map,config) {
-		var date = new Date();
-		var strValue = Std.string(date.getFullYear());
-		if(!(__map_reserved["year"] != null ? map.existsReserved("year") : map.h.hasOwnProperty("year"))) {
-			if(__map_reserved["year"] != null) {
-				map.setReserved("year",strValue);
-			} else {
-				map.h["year"] = strValue;
-			}
-		}
-		var strValue1 = Std.string(date.getMonth() + 1);
-		if(!(__map_reserved["month"] != null ? map.existsReserved("month") : map.h.hasOwnProperty("month"))) {
-			if(__map_reserved["month"] != null) {
-				map.setReserved("month",strValue1);
-			} else {
-				map.h["month"] = strValue1;
-			}
-		}
-		var strValue2 = Std.string(date.getDate());
-		if(!(__map_reserved["day"] != null ? map.existsReserved("day") : map.h.hasOwnProperty("day"))) {
-			if(__map_reserved["day"] != null) {
-				map.setReserved("day",strValue2);
-			} else {
-				map.h["day"] = strValue2;
-			}
-		}
-		var strValue3 = HxOverrides.dateStr(date);
-		if(!(__map_reserved["timestamp"] != null ? map.existsReserved("timestamp") : map.h.hasOwnProperty("timestamp"))) {
-			if(__map_reserved["timestamp"] != null) {
-				map.setReserved("timestamp",strValue3);
-			} else {
-				map.h["timestamp"] = strValue3;
-			}
-		}
-		var strValue4 = DateTools.format(date,"%T");
-		if(!(__map_reserved["time24h"] != null ? map.existsReserved("time24h") : map.h.hasOwnProperty("time24h"))) {
-			if(__map_reserved["time24h"] != null) {
-				map.setReserved("time24h",strValue4);
-			} else {
-				map.h["time24h"] = strValue4;
-			}
-		}
-		var strValue5 = DateTools.format(date,"%F");
-		if(!(__map_reserved["date"] != null ? map.existsReserved("date") : map.h.hasOwnProperty("date"))) {
-			if(__map_reserved["date"] != null) {
-				map.setReserved("date",strValue5);
-			} else {
-				map.h["date"] = strValue5;
-			}
-		}
-		var strValue6 = DateTools.format(date,"%l:%M:%S %p");
-		if(!(__map_reserved["time"] != null ? map.existsReserved("time") : map.h.hasOwnProperty("time"))) {
-			if(__map_reserved["time"] != null) {
-				map.setReserved("time",strValue6);
-			} else {
-				map.h["time"] = strValue6;
-			}
-		}
-		var settings = wiggin_codedox_CodeDox.getSettings();
-		var strValue7 = settings.strCommentBegin;
-		if(!(__map_reserved["commentbegin"] != null ? map.existsReserved("commentbegin") : map.h.hasOwnProperty("commentbegin"))) {
-			if(__map_reserved["commentbegin"] != null) {
-				map.setReserved("commentbegin",strValue7);
-			} else {
-				map.h["commentbegin"] = strValue7;
-			}
-		}
-		var strValue8 = settings.strCommentPrefix;
-		if(!(__map_reserved["commentprefix"] != null ? map.existsReserved("commentprefix") : map.h.hasOwnProperty("commentprefix"))) {
-			if(__map_reserved["commentprefix"] != null) {
-				map.setReserved("commentprefix",strValue8);
-			} else {
-				map.h["commentprefix"] = strValue8;
-			}
-		}
-		var strValue9 = settings.strCommentEnd;
-		if(!(__map_reserved["commentend"] != null ? map.existsReserved("commentend") : map.h.hasOwnProperty("commentend"))) {
-			if(__map_reserved["commentend"] != null) {
-				map.setReserved("commentend",strValue9);
-			} else {
-				map.h["commentend"] = strValue9;
-			}
-		}
-		var strValue10 = settings.strHeaderBegin;
-		if(!(__map_reserved["headerbegin"] != null ? map.existsReserved("headerbegin") : map.h.hasOwnProperty("headerbegin"))) {
-			if(__map_reserved["headerbegin"] != null) {
-				map.setReserved("headerbegin",strValue10);
-			} else {
-				map.h["headerbegin"] = strValue10;
-			}
-		}
-		var strValue11 = settings.strHeaderPrefix;
-		if(!(__map_reserved["headerprefix"] != null ? map.existsReserved("headerprefix") : map.h.hasOwnProperty("headerprefix"))) {
-			if(__map_reserved["headerprefix"] != null) {
-				map.setReserved("headerprefix",strValue11);
-			} else {
-				map.h["headerprefix"] = strValue11;
-			}
-		}
-		var strValue12 = settings.strHeaderEnd;
-		if(!(__map_reserved["headerend"] != null ? map.existsReserved("headerend") : map.h.hasOwnProperty("headerend"))) {
-			if(__map_reserved["headerend"] != null) {
-				map.setReserved("headerend",strValue12);
-			} else {
-				map.h["headerend"] = strValue12;
-			}
-		}
-	}
-	,setIfAbsent: function(map,strKey,strValue) {
-		if(!(__map_reserved[strKey] != null ? map.existsReserved(strKey) : map.h.hasOwnProperty(strKey))) {
-			if(__map_reserved[strKey] != null) {
-				map.setReserved(strKey,strValue);
-			} else {
-				map.h[strKey] = strValue;
-			}
-		}
 	}
 	,normalizeParams: function(params) {
 		var map = new haxe_ds_StringMap();
@@ -1219,6 +1302,37 @@ wiggin_codedox_FileHeader.prototype = {
 		return map;
 	}
 	,__class__: wiggin_codedox_FileHeader
+};
+var wiggin_util_ConfigUtil = function() { };
+wiggin_util_ConfigUtil.__name__ = true;
+wiggin_util_ConfigUtil.updateConfig = function(config,strSection,strKey,value) {
+	var curr = config.get(strSection,null);
+	if(curr == null) {
+		curr = { };
+	}
+	curr[strKey] = value;
+	return config.update(strSection,curr,true);
+};
+var wiggin_util__$ConfigUtil_DynamicObject_$Impl_$ = {};
+wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.__name__ = true;
+wiggin_util__$ConfigUtil_DynamicObject_$Impl_$._new = function(obj) {
+	var this1 = obj == null ? { } : obj;
+	return this1;
+};
+wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.set = function(this1,key,value) {
+	this1[key] = value;
+};
+wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.get = function(this1,key) {
+	return this1[key];
+};
+wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.exists = function(this1,key) {
+	return Object.prototype.hasOwnProperty.call(this1,key);
+};
+wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.remove = function(this1,key) {
+	return Reflect.deleteField(this1,key);
+};
+wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.keys = function(this1) {
+	return Reflect.fields(this1);
 };
 var wiggin_util_JsonUtil = function() { };
 wiggin_util_JsonUtil.__name__ = true;

@@ -68,6 +68,11 @@
 							"type": "boolean",
 							"default": true
 						},
+						"neverAskTemplate": {
+							"description": "If true then never asks to select default template",
+							"type": "boolean",
+							"default": false
+						},
 						"commentprefix": {
 							"description": "Per-line comment prefix",
 							"type": "string",
