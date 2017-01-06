@@ -22,63 +22,50 @@
 package wiggin.util;
 
 import vscode.WorkspaceConfiguration;
+import wiggin.util.StructUtil;
 
 class ConfigUtil
 {
 	/**
-	 * Returns true if the specified Dynamic object is in fact a struct (anonymous type).
-	 * @param	obj - a Dynamic object
-	 * @return Bool
+	 * 	Updates the specified `WorkspaceConfiguration` by merging the `update` struct with
+	 *  the current configuration.
+	 *  
+	 * 	@param	update - an anonymous struct to merge with the current config
+	 *  @param  ?bGlobal - if true then the global (user) config is updated, otherwise the
+	 *                     workspace is updated
+	 * 	@return Thenable
 	 */
-	public static function updateConfig(config:WorkspaceConfiguration, strSection:String, strKey:String, value:Dynamic) : js.Promise.Thenable<Void>
+	public static function update(config:WorkspaceConfiguration, strSection:String, update:Dynamic, ?bGlobal=true) : js.Promise.Thenable<Void>
 	{
 		var curr:DynamicObject<Dynamic> = config.get(strSection, null);
 		if(curr == null)
 		{
 			curr = {};
 		}
-		curr.set(strKey, value);
 
-		return config.update(strSection, curr, true);
+		var merged = StructUtil.mergeStruct(curr, update);
+		return config.update(strSection, merged, bGlobal);
 	}
-	
+
+	/**
+	 * 	Updates the specified `WorkspaceConfiguration` by adding any missing properties from `update`.
+	 *  
+	 * 	@param	update - an anonymous struct to add to the current config
+	 *  @param  ?bGlobal - if true then the global (user) config is updated, otherwise the
+	 *                     workspace is updated
+	 * 	@return Thenable
+	 */
+	public static function updateIfAbsent(config:WorkspaceConfiguration, strSection:String, update:Dynamic, ?bGlobal=true) : js.Promise.Thenable<Void>
+	{
+		var curr:DynamicObject<Dynamic> = config.get(strSection, null);
+		if(curr == null)
+		{
+			curr = {};
+		}
+
+		var merged = StructUtil.mergeStruct(update, curr);
+		return config.update(strSection, merged, bGlobal);
+	}
 
 } // end of ConfigUtil class 
 
-/**
- *  Wrapper for anonymous structures.
- *  Taken from  http://nadako.github.io/rants/posts/2014-05-21_haxe-dynamicobject.html
- *  Thanks, Dan.
- */
-abstract DynamicObject<T>(Dynamic<T>) from Dynamic<T> {
-
-    public inline function new(?obj:Dynamic<T>) {
-		this = (obj == null) ? {} : obj;
-    }
-
-    @:arrayAccess
-    public inline function set(key:String, value:T):Void {
-        Reflect.setField(this, key, value);
-    }
-
-    @:arrayAccess
-    public inline function get(key:String):Null<T> {
-        #if js
-        return untyped this[key];
-        #else
-        return Reflect.field(this, key);
-        #end
-    }
-
-    public inline function exists(key:String):Bool {
-        return Reflect.hasField(this, key);
-    }
-
-    public inline function remove(key:String):Bool {
-        return Reflect.deleteField(this, key);
-    }
-
-    public inline function keys():Array<String> {
-        return Reflect.fields(this);
-    }
-}

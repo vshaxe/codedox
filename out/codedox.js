@@ -743,6 +743,7 @@ var wiggin_codedox_CodeDox = function(context) {
 		wiggin_codedox_CodeDox.s_settings = null;
 	}));
 	context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument($bind(this,this.onTextChange)));
+	this.registerCommand(context,"codedox" + ".setup",$bind(this,this.doSetup));
 	this.registerTextEditorCommand(context,"codedox" + ".fileheader" + ".insert",$bind(this,this.insertFileHeader));
 	this.registerTextEditorCommand(context,"codedox" + ".comment" + ".insert",$bind(this,this.insertComment));
 	var bAutoPrefixOnEnter = config.get("autoPrefixOnEnter",true);
@@ -785,9 +786,23 @@ wiggin_codedox_CodeDox.getAutoClosingClose = function(strAutoClosingOpen) {
 wiggin_codedox_CodeDox.initFirstRun = function(config) {
 };
 wiggin_codedox_CodeDox.prototype = {
-	registerTextEditorCommand: function(context,strCmd,callback) {
+	registerCommand: function(context,strCmd,callback) {
+		var disposable = Vscode.commands.registerCommand(strCmd,callback);
+		context.subscriptions.push(disposable);
+	}
+	,registerTextEditorCommand: function(context,strCmd,callback) {
 		var disposable = Vscode.commands.registerTextEditorCommand(strCmd,callback);
 		context.subscriptions.push(disposable);
+	}
+	,doSetup: function() {
+		try {
+			var setup = new wiggin_codedox_Setup();
+			setup.doSetup();
+		} catch( e ) {
+			haxe_CallStack.lastException = e;
+			if (e instanceof js__$Boot_HaxeError) e = e.val;
+			this.handleError("Error setting up minimal config: ",e,haxe_CallStack.exceptionStack());
+		}
 	}
 	,insertFileHeader: function(editor,edit) {
 		try {
@@ -1126,7 +1141,7 @@ wiggin_codedox_FileHeader.addDefaultParams = function(map,config) {
 	wiggin_codedox_FileHeader.addDefaultLicenses(map);
 };
 wiggin_codedox_FileHeader.addDefaultLicenses = function(map) {
-	var arr = wiggin_codedox_FileHeader.getDefaultLicenses();
+	var arr = wiggin_codedox_Setup.getDefaultLicenses();
 	var _g = 0;
 	while(_g < arr.length) {
 		var license = arr[_g];
@@ -1151,32 +1166,10 @@ wiggin_codedox_FileHeader.setIfAbsent = function(map,strKey,strValue) {
 		}
 	}
 };
-wiggin_codedox_FileHeader.getDefaultLicenses = function() {
-	var str = js_node_Fs.readFileSync(wiggin_codedox_CodeDox.getExtPath() + "/defaultlicenses.json",{ encoding : "utf8"});
-	var arr = JSON.parse(str);
-	return arr;
-};
-wiggin_codedox_FileHeader.pickDefaultLicense = function(config) {
-	var arr = wiggin_codedox_FileHeader.getDefaultLicenses();
-	var items = [];
-	var _g = 0;
-	while(_g < arr.length) {
-		var license = arr[_g];
-		++_g;
-		items.push({ label : license.description, description : license.name});
-	}
-	Vscode.window.showQuickPick(items,{ placeHolder : "Select a default license"}).then(function(item) {
-		if(item != null) {
-			wiggin_codedox_FileHeader.setDefaultTemplate(item.description,config);
-		}
-	});
-};
-wiggin_codedox_FileHeader.setDefaultTemplate = function(strLicense,config) {
-	console.log("Setting default license to: " + strLicense);
-};
 wiggin_codedox_FileHeader.setNeverAsk = function(config) {
-	wiggin_util_ConfigUtil.updateConfig(config,"codedox","neverAskTemplate",true).then(function(Void) {
-		console.log("codedox" + ".neverAskTemplate set to true.");
+	var update = { neverAskTemplate : true};
+	wiggin_util_ConfigUtil.update(config,"codedox",update).then(function(Void) {
+		console.log("codedox" + ".neverAskTemplate set to true successfully.");
 	},function(result) {
 		console.log("Failed to set " + "codedox" + ".neverAskTemplate");
 		console.log(result);
@@ -1214,13 +1207,13 @@ wiggin_codedox_FileHeader.prototype = {
 			if(config.get("codedox" + ".neverAskTemplate",false)) {
 				throw new js__$Boot_HaxeError("");
 			}
-			var msg = "codedox" + ": No template defined for " + strLang + ". Would you like to configure this feature?";
+			var msg = "codedox" + ": No file header template defined for " + strLang + ". Would you like to configure this feature?";
 			var item1 = { title : "Yes"};
 			var item2 = { title : "No", isCloseAffordance : true};
 			var item3 = { title : "Never"};
 			Vscode.window.showErrorMessage(msg,item1,item2,item3).then(function(item) {
 				if(item.title == item1.title) {
-					wiggin_codedox_FileHeader.pickDefaultLicense(config);
+					Vscode.commands.executeCommand("codedox" + ".setup");
 				} else if(item.title == item3.title) {
 					wiggin_codedox_FileHeader.setNeverAsk(config);
 				}
@@ -1303,35 +1296,108 @@ wiggin_codedox_FileHeader.prototype = {
 	}
 	,__class__: wiggin_codedox_FileHeader
 };
+var wiggin_codedox_Setup = function() {
+};
+wiggin_codedox_Setup.__name__ = true;
+wiggin_codedox_Setup.getDefaultLicenses = function() {
+	var str = js_node_Fs.readFileSync(wiggin_codedox_CodeDox.getExtPath() + "/defaultlicenses.json",{ encoding : "utf8"});
+	var arr = JSON.parse(str);
+	return arr;
+};
+wiggin_codedox_Setup.pickDefaultLicense = function() {
+	var config = Vscode.workspace.getConfiguration();
+	return new Promise(function(resolve,reject) {
+		var arr = wiggin_codedox_Setup.getDefaultLicenses();
+		var items = [];
+		var _g = 0;
+		while(_g < arr.length) {
+			var license = arr[_g];
+			++_g;
+			items.push({ label : license.description, description : license.name});
+		}
+		Vscode.window.showQuickPick(items,{ placeHolder : "Select a default license"}).then(function(item) {
+			if(item != null) {
+				wiggin_codedox_Setup.setDefaultTemplate(item.description,config).then(function(Void) {
+					resolve(true);
+				},function(reason) {
+					reject(reason);
+				});
+			}
+		});
+	});
+};
+wiggin_codedox_Setup.setDefaultTemplate = function(strLicense,config) {
+	return new Promise(function(resolve,reject) {
+		var str = "${" + strLicense + "}";
+		var update = { fileheader : { templates : { "*" : [str]}}};
+		wiggin_util_ConfigUtil.update(config,"codedox",update).then(function(Void) {
+			console.log("codedox" + "Default template set successfully.");
+			resolve(true);
+		},function(reason) {
+			console.log("Failed to set " + "codedox" + " default template.");
+			console.log(reason);
+			reject("Error writing config. Check for errors in your user settings.json and try again.");
+		});
+	});
+};
+wiggin_codedox_Setup.inputCompany = function() {
+	return null;
+};
+wiggin_codedox_Setup.prototype = {
+	doSetup: function() {
+		return new Promise(function(resolve,reject) {
+			Promise.all([wiggin_codedox_Setup.pickDefaultLicense(),wiggin_codedox_Setup.inputCompany()]).then(function(arr) {
+				resolve(true);
+			},function(reason) {
+				reject(reason);
+			});
+		});
+	}
+	,__class__: wiggin_codedox_Setup
+};
 var wiggin_util_ConfigUtil = function() { };
 wiggin_util_ConfigUtil.__name__ = true;
-wiggin_util_ConfigUtil.updateConfig = function(config,strSection,strKey,value) {
+wiggin_util_ConfigUtil.update = function(config,strSection,update,bGlobal) {
+	if(bGlobal == null) {
+		bGlobal = true;
+	}
 	var curr = config.get(strSection,null);
 	if(curr == null) {
 		curr = { };
 	}
-	curr[strKey] = value;
-	return config.update(strSection,curr,true);
+	var merged = wiggin_util_StructUtil.mergeStruct(curr,update);
+	return config.update(strSection,merged,bGlobal);
 };
-var wiggin_util__$ConfigUtil_DynamicObject_$Impl_$ = {};
-wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.__name__ = true;
-wiggin_util__$ConfigUtil_DynamicObject_$Impl_$._new = function(obj) {
+wiggin_util_ConfigUtil.updateIfAbsent = function(config,strSection,update,bGlobal) {
+	if(bGlobal == null) {
+		bGlobal = true;
+	}
+	var curr = config.get(strSection,null);
+	if(curr == null) {
+		curr = { };
+	}
+	var merged = wiggin_util_StructUtil.mergeStruct(update,curr);
+	return config.update(strSection,merged,bGlobal);
+};
+var wiggin_util__$DynamicObject_DynamicObject_$Impl_$ = {};
+wiggin_util__$DynamicObject_DynamicObject_$Impl_$.__name__ = true;
+wiggin_util__$DynamicObject_DynamicObject_$Impl_$._new = function(obj) {
 	var this1 = obj == null ? { } : obj;
 	return this1;
 };
-wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.set = function(this1,key,value) {
+wiggin_util__$DynamicObject_DynamicObject_$Impl_$.set = function(this1,key,value) {
 	this1[key] = value;
 };
-wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.get = function(this1,key) {
+wiggin_util__$DynamicObject_DynamicObject_$Impl_$.get = function(this1,key) {
 	return this1[key];
 };
-wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.exists = function(this1,key) {
+wiggin_util__$DynamicObject_DynamicObject_$Impl_$.exists = function(this1,key) {
 	return Object.prototype.hasOwnProperty.call(this1,key);
 };
-wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.remove = function(this1,key) {
+wiggin_util__$DynamicObject_DynamicObject_$Impl_$.remove = function(this1,key) {
 	return Reflect.deleteField(this1,key);
 };
-wiggin_util__$ConfigUtil_DynamicObject_$Impl_$.keys = function(this1) {
+wiggin_util__$DynamicObject_DynamicObject_$Impl_$.keys = function(this1) {
 	return Reflect.fields(this1);
 };
 var wiggin_util_JsonUtil = function() { };
@@ -1663,6 +1729,87 @@ wiggin_util_StringIterator.prototype = {
 	}
 	,__class__: wiggin_util_StringIterator
 };
+var wiggin_util_StructUtil = function() { };
+wiggin_util_StructUtil.__name__ = true;
+wiggin_util_StructUtil.isStruct = function(obj) {
+	if(obj != null && Type["typeof"](obj) == ValueType.TObject) {
+		return (obj == null ? null : js_Boot.getClass(obj)) == null;
+	} else {
+		return false;
+	}
+};
+wiggin_util_StructUtil.mergeStruct = function(struct1,struct2) {
+	if(struct1 == null) {
+		return struct2;
+	}
+	if(struct2 == null) {
+		return struct1;
+	}
+	if(struct1 == null && struct2 == null) {
+		return null;
+	}
+	var merged = wiggin_util_StructUtil.deepClone(struct1);
+	var source = struct2;
+	var _g = 0;
+	var _g1 = Reflect.fields(source);
+	while(_g < _g1.length) {
+		var key = _g1[_g];
+		++_g;
+		var valMerged = merged[key];
+		var valSource = source[key];
+		var tmp;
+		var tmp1;
+		if(valSource != null && Type["typeof"](valSource) == ValueType.TObject) {
+			var o = valSource;
+			tmp1 = (o == null ? null : js_Boot.getClass(o)) == null;
+		} else {
+			tmp1 = false;
+		}
+		if(tmp1) {
+			if(valMerged != null && Type["typeof"](valMerged) == ValueType.TObject) {
+				var o1 = valMerged;
+				tmp = (o1 == null ? null : js_Boot.getClass(o1)) == null;
+			} else {
+				tmp = false;
+			}
+		} else {
+			tmp = false;
+		}
+		if(tmp) {
+			merged[key] = wiggin_util_StructUtil.mergeStruct(valMerged,valSource);
+		} else {
+			merged[key] = valSource;
+		}
+	}
+	return merged;
+};
+wiggin_util_StructUtil.deepClone = function(struct) {
+	if(struct == null) {
+		return null;
+	}
+	var input = struct;
+	var copy = { };
+	var _g = 0;
+	var _g1 = Reflect.fields(input);
+	while(_g < _g1.length) {
+		var key = _g1[_g];
+		++_g;
+		var val = input[key];
+		var tmp;
+		if(val != null && Type["typeof"](val) == ValueType.TObject) {
+			var o = val;
+			tmp = (o == null ? null : js_Boot.getClass(o)) == null;
+		} else {
+			tmp = false;
+		}
+		if(tmp) {
+			copy[key] = wiggin_util_StructUtil.deepClone(val);
+		} else {
+			copy[key] = val;
+		}
+	}
+	return copy;
+};
 var $_, $fid = 0;
 function $bind(o,m) { if( m == null ) return null; if( m.__id__ == null ) m.__id__ = $fid++; var f; if( o.hx__closures__ == null ) o.hx__closures__ = {}; else f = o.hx__closures__[m.__id__]; if( f == null ) { f = function(){ return f.method.apply(f.scope, arguments); }; f.scope = o; f.method = m; o.hx__closures__[m.__id__] = f; } return f; }
 String.prototype.__class__ = String;
@@ -1687,6 +1834,7 @@ js_Boot.__toStr = ({ }).toString;
 wiggin_codedox_CodeDox.EXTENSION_NAME = "codedox";
 wiggin_codedox_CodeDox.FEATURE_FILEHEADER = "codedox" + ".fileheader";
 wiggin_codedox_CodeDox.FEATURE_COMMENT = "codedox" + ".comment";
+wiggin_codedox_CodeDox.CMD_SETUP = "codedox" + ".setup";
 wiggin_codedox_CodeDox.CMD_INSERT_FILE_HEADER = "codedox" + ".fileheader" + ".insert";
 wiggin_codedox_CodeDox.CMD_INSERT_COMMENT = "codedox" + ".comment" + ".insert";
 wiggin_codedox_FileHeader.TEMPLATES = "codedox" + ".fileheader" + ".templates";

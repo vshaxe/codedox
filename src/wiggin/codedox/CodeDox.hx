@@ -55,6 +55,9 @@ class CodeDox
 	/** Comment feature */
 	public static inline var FEATURE_COMMENT = EXTENSION_NAME + ".comment";
 
+	/** Command name for setup */
+	public static inline var CMD_SETUP = EXTENSION_NAME + ".setup";
+
 	/** Command name for insert file header */
 	public static inline var CMD_INSERT_FILE_HEADER = FEATURE_FILEHEADER + ".insert";
 
@@ -92,6 +95,7 @@ class CodeDox
 		context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void){s_settings=null;}));
 		context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument(onTextChange));
 
+		registerCommand(context, CMD_SETUP, doSetup);
 		registerTextEditorCommand(context, CMD_INSERT_FILE_HEADER, insertFileHeader);
 		registerTextEditorCommand(context, CMD_INSERT_COMMENT, insertComment);
 
@@ -152,10 +156,39 @@ class CodeDox
 	 *  @param strCmd - the command name as it appears in `package.json`
 	 *	@param callback - the method called when the command is executed 
 	 */
+	private function registerCommand(context:ExtensionContext, strCmd:String, callback:Void->Void)
+	{
+		var disposable = Vscode.commands.registerCommand(strCmd, callback);
+		context.subscriptions.push(disposable);
+	}
+
+	/**
+	 *  Registers a text editor command with vscode such that the `callback` will get
+	 *	called whenever the command is executed. 
+	 *	
+	 *  @param strCmd - the command name as it appears in `package.json`
+	 *	@param callback - the method called when the command is executed 
+	 */
 	private function registerTextEditorCommand(context:ExtensionContext, strCmd:String, callback:TextEditor->TextEditorEdit->Void)
 	{
 		var disposable = Vscode.commands.registerTextEditorCommand(strCmd, callback);
 		context.subscriptions.push(disposable);
+	}
+
+	/**
+	 *  Implementation of the `codedox.setup` command.
+	 */
+	private function doSetup() : Void
+	{
+		try
+		{
+			var setup = new Setup();
+			setup.doSetup();
+		}
+		catch(e:Dynamic)
+		{
+			handleError("Error setting up minimal config: ", e, haxe.CallStack.exceptionStack());
+		}
 	}
 
 	/**

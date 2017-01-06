@@ -1,0 +1,45 @@
+package wiggin.util;
+
+/**
+ *  Wrapper for anonymous structures.
+ *  Taken and modified from  http://nadako.github.io/rants/posts/2014-05-21_haxe-dynamicobject.html
+ *  Thanks, Dan.
+ */
+abstract DynamicObject<T>(Dynamic<T>) from Dynamic<T> to Dynamic
+{
+    public inline function new(?obj:Dynamic<T>) 
+	{
+		this = (obj == null) ? {} : obj;
+    }
+
+    @:arrayAccess
+    public inline function set(key:String, value:T):Void 
+	{
+        Reflect.setField(this, key, value);
+    }
+
+    @:arrayAccess
+    public inline function get(key:String):Null<T> 
+	{
+        #if js
+        return untyped this[key];
+        #else
+        return Reflect.field(this, key);
+        #end
+    }
+
+    public inline function exists(key:String):Bool 
+	{
+        return Reflect.hasField(this, key);
+    }
+
+    public inline function remove(key:String):Bool 
+	{
+        return Reflect.deleteField(this, key);
+    }
+
+    public inline function keys():Array<String> 
+	{
+        return Reflect.fields(this);
+    }
+}

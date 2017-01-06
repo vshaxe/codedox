@@ -29,11 +29,10 @@ import vscode.TextLine;
 import vscode.Range;
 import vscode.MessageItem;
 import vscode.QuickPickItem;
+import wiggin.codedox.License;
 import wiggin.util.JsonUtil;
 import wiggin.util.RegExUtil;
 import wiggin.util.ConfigUtil;
-
-typedef License = {name:String, description:String, text:Array<String>}
 
 /**
  *  Implements command for inserting file header at top of files.
@@ -119,14 +118,14 @@ class FileHeader
 				throw "";  // Abort the insert, but don't display an error.
 			}
 		
-			var msg = CodeDox.EXTENSION_NAME + ": No template defined for " + strLang + ". Would you like to configure this feature?";
+			var msg = CodeDox.EXTENSION_NAME + ": No file header template defined for " + strLang + ". Would you like to configure this feature?";
 			var item1:MessageItem = {title:"Yes"};
 			var item2:MessageItem = {title:"No", isCloseAffordance:true};
 			var item3:MessageItem = {title:"Never"};
 			Vscode.window.showErrorMessage(msg, item1, item2, item3).then(function(item:MessageItem){
 				if(item.title == item1.title)
 				{
-					pickDefaultLicense(config);
+					Vscode.commands.executeCommand(CodeDox.CMD_SETUP);
 				}
 				else if(item.title == item3.title)
 				{
@@ -221,7 +220,7 @@ class FileHeader
 	 */
 	private static function addDefaultLicenses(map:Map<String,Dynamic>) : Void
 	{
-		var arr:Array<License> = getDefaultLicenses();
+		var arr:Array<License> = wiggin.codedox.Setup.getDefaultLicenses();
 		for(license in arr)
 		{
 			setIfAbsent(map, license.name, license.text.join("\n"));
@@ -283,60 +282,17 @@ class FileHeader
 	}
 
 	/**
-	 *  Reads the default license definitions from a file.
-	 *  @return Array<License>
-	 */
-	private static function getDefaultLicenses() : Array<License>
-	{
-		var str = sys.io.File.getContent(CodeDox.getExtPath() + "/defaultlicenses.json");
-		var arr:Array<License> = haxe.Json.parse(str);
-		return arr;
-	}
-
-	/**
-	 *  Allows the user to select a default license.
-	 *  @param config - the `WorkspaceConfiguration`
-	 */
-	private static function pickDefaultLicense(config:WorkspaceConfiguration) : Void
-	{
-		var arr:Array<License> = getDefaultLicenses();
-
-		// Create list of available built-in licenses.
-		var items:Array<QuickPickItem> = [];
-		for(license in arr)
-		{
-			items.push({label:license.description, description:license.name});
-		}
-
-		Vscode.window.showQuickPick(items, {placeHolder:"Select a default license"}).then(function (item:QuickPickItem) {	
-			if(item != null)
-			{
-				setDefaultTemplate(item.description, config);	
-			}
-		});
-	}
-
-	/**
-	 *  Updates the user's config with the specified default template.
-	 *  @param strLicense - name of the built-in license param
-	 *  @param config - the `WorkspaceConfiguration` to write to
-	 */
-	private static function setDefaultTemplate(strLicense:String, config:WorkspaceConfiguration) : Void
-	{
-		trace("Setting default license to: " + strLicense);
-	}
-
-	/**
 	 *  Updates the user's config so that it will never offer to choose a default template.
 	 *  @param config - the `WorkspaceConfiguration` to write to
 	 */
 	private static function setNeverAsk(config:WorkspaceConfiguration) : Void
 	{
-		ConfigUtil.updateConfig(config, CodeDox.EXTENSION_NAME, "neverAskTemplate", true).then(
+		var update = {neverAskTemplate:true};
+		ConfigUtil.update(config, CodeDox.EXTENSION_NAME, update).then(
 			function(Void)
 			{
 				#if debug
-				trace(CodeDox.EXTENSION_NAME + ".neverAskTemplate set to true.");
+				trace(CodeDox.EXTENSION_NAME + ".neverAskTemplate set to true successfully.");
 				#end
 			}, 
 			function(result)
