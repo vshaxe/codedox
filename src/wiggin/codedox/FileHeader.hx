@@ -28,7 +28,6 @@ import vscode.Position;
 import vscode.TextLine;
 import vscode.Range;
 import vscode.MessageItem;
-import vscode.QuickPickItem;
 import wiggin.codedox.License;
 import wiggin.util.JsonUtil;
 import wiggin.util.RegExUtil;
@@ -86,10 +85,6 @@ class FileHeader
 	private function getFileHeader(strLang:String) : String
 	{
 		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration();
-		if(config == null)
-		{
-			throw "Template config missing.";
-		}
 
 		var strTemplate = getTemplate(config, strLang);
 		strTemplate = populateTemplate(config, strTemplate, strLang);
@@ -125,7 +120,7 @@ class FileHeader
 			Vscode.window.showErrorMessage(msg, item1, item2, item3).then(function(item:MessageItem){
 				if(item.title == item1.title)
 				{
-					Vscode.commands.executeCommand(CodeDox.CMD_SETUP);
+					Vscode.commands.executeCommand(CodeDox.CMD_SETUP).then(onSetupComplete);
 				}
 				else if(item.title == item3.title)
 				{
@@ -135,6 +130,19 @@ class FileHeader
 			template = [""]; // This will erase what the user typed.
 		}
 		return template.join("\n");
+	}
+
+	/**
+	 *  Called after the Setup wizard was triggered during file header insertion.
+	 *  @param bResult - true if the wizard completed successfully
+	 */
+	private function onSetupComplete(bResult:Bool) : Void
+	{
+		if(bResult)
+		{
+			// Now that the setup wizard has created a minimal config, re-run the insert header command.
+			js.Node.setTimeout(function(){Vscode.commands.executeCommand(CodeDox.CMD_INSERT_FILE_HEADER);}, 1000);
+		}
 	}
 
 	/**

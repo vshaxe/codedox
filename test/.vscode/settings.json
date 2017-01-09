@@ -9,7 +9,7 @@
         // you can add more than one configuration and switch between them
         //["build-cpp.hxml"]
     ],
-		"haxe.displayServer": {
-		"haxePath": "haxe"
+	// Codedox settings
+	"codedox": {
 	}
 }

@@ -21,44 +21,189 @@
  */
 package wiggin.codedox;
 
-import js.Promise.Thenable;
-import vscode.WorkspaceConfiguration;
+import js.Promise;
 import vscode.QuickPickItem;
 import wiggin.codedox.License;
 import wiggin.util.ConfigUtil;
+import wiggin.util.StructUtil;
+import wiggin.util.StringUtil;
 
-typedef Result = {success:Bool, exp:Dynamic}
+typedef Transaction = {scope:Scope, obj:{}}
 
 /**
  *  Implements command for setting up minimal config.
  */
 class Setup
 {
+	/** Collects config changes so they can be applied (or aborted) at the end of the wizard. */
+	private var m_transaction:Transaction;
+
+	/**
+	 *  Constructor
+	 */
 	public function new()
 	{
-		// Do nothing.
+		m_transaction = {scope:Scope.USER, obj:{}};
 	}
 
 	/**
 	 *  Run the setup "wizard".
 	 */
-	public function doSetup() : Thenable<Bool>
+	public function doSetup() : Promise<Bool>
 	{
-		return new js.Promise(function(resolve,reject) {
-			js.Promise.all([pickDefaultLicense(), inputCompany()]).then(
-				function(arr)
+		return new Promise(function(resolve,reject) {
+			pickScope()
+			.then(pickDefaultLicense)
+			.then(inputCompany)
+			.then(applyConfig)
+			.then(resolve,function(err){
+				if(err != null && Std.string(err) == "")
 				{
-					var arrResults:Array<Bool> = arr;
-					var bResult = true;
-					for(res in arrResults) {if(!res) bResult = false;}
-					resolve(bResult);
+					Vscode.window.showInformationMessage("Setup cancelled.");
+					reject("");
+				}
+			});
+		});
+	}
+
+	/**
+	 *  Allows the user to select whether settings are written to USER or WORKSPACE config.
+	 *  @return Promise<Bool>
+	 */
+	private function pickScope() : Promise<Bool>
+	{
+		var prom = new Promise(function(resolve,reject){
+			var item1:QuickPickItem = {label:Scope.USER, description:"Stored globally, applies to any instance of VS Code"};
+			var item2:QuickPickItem = {label:Scope.WORKSPACE, description:"Stored inside current workspace in the .vscode folder"};
+			
+			if(Vscode.workspace.rootPath == null)
+			{
+				// Can only write to USER when no folder opened.
+				m_transaction.scope = Scope.USER;
+				resolve(true);
+			}
+			Vscode.window.showQuickPick([item1, item2], {placeHolder:"Where should these settings be stored?"}).then(
+				function(item)
+				{
+					if(item != null)
+					{
+						m_transaction.scope = (item.label == Scope.USER) ? Scope.USER : Scope.WORKSPACE;
+						resolve(true);
+					}
+					else
+					{
+						reject("");
+					}
 				},
-				function(reason)
+				function(err)
 				{
-					reject(reason);
+					reject(err);
 				}
 			);
 		});
+		return prom;
+	}
+
+	/**
+	 *  Allows the user to select a default license.
+	 *  @return Promise<Bool>
+	 */
+	private function pickDefaultLicense(Void) : Promise<Bool>
+	{
+		var prom = new Promise(function(resolve,reject) {
+			// Create list of available built-in licenses.
+			var arr:Array<License> = getDefaultLicenses();
+			var items:Array<QuickPickItem> = [];
+			for(license in arr)
+			{
+				items.push({label:license.description, description:license.name});
+			}
+			Vscode.window.showQuickPick(items, {placeHolder:"Select a default license"}).then(
+				function(item)
+				{
+					if(item != null)
+					{
+						var str = "${" + item.description + "}";
+						var update = {fileheader:{templates:{"*":[str]}}};
+						m_transaction.obj = StructUtil.mergeStruct(m_transaction.obj, update);
+						resolve(true);
+					}
+					else
+					{
+						reject("");
+					}
+				},
+				function(err)
+				{
+					reject(err);
+				}
+			);
+		});
+		return prom;
+	}
+
+	/**
+	 *  Allows the user to enter a company name.
+	 *  @return Promise<Bool>
+	 */
+	private function inputCompany(Void) : Promise<Bool>
+	{
+		var prom = new Promise(function(resolve,reject){
+			var strCompany = getCurrentCompany();
+			Vscode.window.showInputBox({prompt:"Enter your company or author name", value:strCompany}).then(
+				function(strInput)
+				{
+					if(StringUtil.hasChars(strInput))
+					{
+						var update = {fileheader:{params:{"*":{company:strInput}}}};
+						m_transaction.obj = StructUtil.mergeStruct(m_transaction.obj, update);
+						resolve(true);
+					}
+					else
+					{
+						reject("");
+					}
+				},
+				function(err)
+				{
+					reject(err);
+				}
+			);
+		});
+		return prom;
+	}
+
+	/**
+	 *  Update's user's config with the specified company name.
+	 *  @param strCompany - text to save in the `company` property
+	 *  @return Promise<Bool>
+	 */
+	private function applyConfig(Void) : Promise<Bool>
+	{
+		var prom = new js.Promise(function(resolve,reject) {
+			var config = Vscode.workspace.getConfiguration();
+			ConfigUtil.update(config, CodeDox.EXTENSION_NAME, m_transaction.obj, m_transaction.scope).then(
+				function(Void)
+				{
+					#if debug
+					trace(CodeDox.EXTENSION_NAME + "Config updated successfully.");
+					#end
+
+					resolve(true);
+				}, 
+				function(reason)
+				{
+					#if debug
+					trace("Failed to update " + CodeDox.EXTENSION_NAME + " config.");
+					trace(reason);
+					#end
+
+					var str = (m_transaction.scope == Scope.USER) ? "user settings.json" : "workspace settings.json";
+					reject('Error updating config. Check for errors in your ${str} and try again.');
+				}
+			);
+		});
+		return prom;
 	}
 
 	/**
@@ -73,82 +218,25 @@ class Setup
 	}
 
 	/**
-	 *  Allows the user to select a default license.
+	 *  Returns the current value of the `company` property, or empty string if
+	 *  not defined.
+	 *  @return String or ""
 	 */
-	private static function pickDefaultLicense() : Thenable<Bool>
+	private static function getCurrentCompany() : String
 	{
 		var config = Vscode.workspace.getConfiguration();
-
-		return new js.Promise(function(resolve,reject) {
-			var arr:Array<License> = getDefaultLicenses();
-
-			// Create list of available built-in licenses.
-			var items:Array<QuickPickItem> = [];
-			for(license in arr)
-			{
-				items.push({label:license.description, description:license.name});
-			}
-
-			Vscode.window.showQuickPick(items, {placeHolder:"Select a default license"}).then(function (item:QuickPickItem) {	
-				if(item != null)
-				{
-					setDefaultTemplate(item.description, config).then(
-						function(Void)
-						{
-							resolve(true);
-						},
-						function(reason)
-						{
-							reject(reason);
-						}
-					);	
-				}
-				else
-				{
-					resolve(false);
-				}
-			});
-		});
+		var strCompany= null;
+		var editor = Vscode.window.activeTextEditor;
+		if(editor == null)
+		{
+			strCompany = config.get(FileHeader.PARAMS + "." + editor.document.languageId + ".company", null);
+		}
+		
+		if(strCompany == null)
+		{
+			strCompany = config.get(FileHeader.PARAMS + ".*.company", "");
+		}
+		return strCompany;
 	}
 
-	/**
-	 *  Updates the user's config with the specified default template.
-	 *  @param strLicense - name of the built-in license param
-	 *  @param config - the `WorkspaceConfiguration` to write to
-	 */
-	private static function setDefaultTemplate(strLicense:String, config:WorkspaceConfiguration) : Thenable<Bool>
-	{
-		return new js.Promise(function(resolve,reject){
-			var str = "${" + strLicense + "}";
-			var update = {fileheader:{templates:{"*":[str]}}};
-
-			ConfigUtil.update(config, CodeDox.EXTENSION_NAME, update).then(
-				function(Void)
-				{
-					#if debug
-					trace(CodeDox.EXTENSION_NAME + "Default template set successfully.");
-					#end
-
-					resolve(true);
-				}, 
-				function(reason)
-				{
-					#if debug
-					trace("Failed to set " + CodeDox.EXTENSION_NAME + " default template.");
-					trace(reason);
-					#end
-
-					reject("Error writing config. Check for errors in your user settings.json and try again.");
-				}
-			);
-		});
-	}
-
-	/**
-	 *  Allows the user to enter a company name.
-	 */
-	private static function inputCompany() : Thenable<String>
-	{
-		return null;
-	}
-}
+} // end of Setup class

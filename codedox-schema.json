@@ -16,6 +16,11 @@
 					"type": "boolean",
 					"default": true
 				},
+				"autoInsertHeader": {
+					"description": "If true then file header insertion is triggered by typing the value of `headerbegin`",
+					"type": "boolean",
+					"default": true
+				},
 				"autoPrefixOnEnter": {
 					"description": "If true then onEnterRules are added",
 					"type": "boolean",

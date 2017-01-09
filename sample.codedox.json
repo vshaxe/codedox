@@ -1,6 +1,7 @@
 {
 	"codedox": {
 		"autoInsert": true,
+		"autoInsertHeader": true,
 		"autoPrefixOnEnter": true,
 		"commentprefix": "*  ",
 		"commentbegin": "/**",

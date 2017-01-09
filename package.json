@@ -64,7 +64,12 @@
 					"additionalProperties": false,
 					"properties": {
 						"autoInsert": {
-							"description": "If true then insertion is triggered by typing the value of `commentbegin` or `headerbegin`",
+							"description": "If true then function comment insertion is triggered by typing the value of `commentbegin`",
+							"type": "boolean",
+							"default": true
+						},
+						"autoInsertHeader": {
+							"description": "If true then file header insertion is triggered by typing the value of `headerbegin`",
 							"type": "boolean",
 							"default": true
 						},

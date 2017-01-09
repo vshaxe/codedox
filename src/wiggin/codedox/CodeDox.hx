@@ -21,6 +21,7 @@
  */
 package wiggin.codedox;
 
+import js.Promise;
 import vscode.WorkspaceConfiguration;
 import vscode.ExtensionContext;
 import vscode.TextEditor;
@@ -33,7 +34,7 @@ import wiggin.codedox.Commenter;
 import wiggin.util.StringUtil;
 import wiggin.util.ParseUtil;
 
-typedef Settings = {autoInsert:Bool, strCommentBegin:String, strCommentEnd:String, 
+typedef Settings = {autoInsert:Bool, autoInsertHeader:Bool, strCommentBegin:String, strCommentEnd:String, 
 					strCommentPrefix:String, strCommentDescription:String, strCommentTrigger:String, 
 					strAutoClosingClose:String, strHeaderBegin:String, strHeaderEnd:String, strHeaderPrefix:String,
 					strHeaderTrigger:String, }
@@ -177,18 +178,28 @@ class CodeDox
 
 	/**
 	 *  Implementation of the `codedox.setup` command.
+	 *  @returns Promise<Bool> - a Thenable that resolves to true if setup completed successfully.
 	 */
-	private function doSetup() : Void
+	private function doSetup() : Promise<Bool>
 	{
+		var prom:Promise<Bool>;
 		try
 		{
 			var setup = new Setup();
-			setup.doSetup();
+			prom = setup.doSetup();
+			prom.catchError(
+				function(err)
+				{
+					handleError(err, null, null);
+				}
+			);
 		}
 		catch(e:Dynamic)
 		{
 			handleError("Error setting up minimal config: ", e, haxe.CallStack.exceptionStack());
+			prom = Promise.reject();
 		}
+		return prom;
 	}
 
 	/**
@@ -247,7 +258,7 @@ class CodeDox
 			// Vast majority of keystrokes will not result in an insert, so try to exit fast.
 			var settings:Settings = getSettings();
 			var doc = evt.document;
-			if(!settings.autoInsert || !isLangaugeSupported(doc.languageId) || evt.contentChanges.length != 1)
+			if((!settings.autoInsert && !settings.autoInsertHeader) || !isLangaugeSupported(doc.languageId) || evt.contentChanges.length != 1)
 			{
 				return;
 			}
@@ -273,7 +284,8 @@ class CodeDox
 						editor.selection = sel;
 					}
 				}
-				else if(strChangeText == settings.strHeaderTrigger && doc.offsetAt(change.range.end) == 1 && change.range.isEmpty)
+				else if(settings.autoInsertHeader && strChangeText == settings.strHeaderTrigger && 
+				        doc.offsetAt(change.range.end) == 1 && change.range.isEmpty)
 				{
 					var line = doc.lineAt(0);
 					if(line.text == settings.strHeaderBegin)
@@ -282,7 +294,8 @@ class CodeDox
 						doHeaderInsert(line, editor);
 					}  
 				}
-				else if(strChangeText == settings.strCommentTrigger || strChangeText == settings.strCommentTrigger + settings.strAutoClosingClose)
+				else if(settings.autoInsert && strChangeText == settings.strCommentTrigger || 
+				        strChangeText == settings.strCommentTrigger + settings.strAutoClosingClose)
 				{
 					var line = doc.lineAt(change.range.start.line);
 					var strCheck = StringUtil.trim(line.text);
@@ -396,6 +409,7 @@ class CodeDox
 
 			s_settings = {
 				autoInsert: config.get("autoInsert", true),
+				autoInsertHeader: config.get("autoInsertHeader", true),
 				strCommentBegin: strCommentBegin,
 				strCommentEnd: config.get("commentend", "*/"),
 				strCommentPrefix: config.get("commentprefix", "*  "),

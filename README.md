@@ -1,5 +1,7 @@
 # Codedox for Haxe and Visual Studio Code
 
+[![Current Version](https://vsmarketplacebadge.apphb.com/version/wiggin77.codedox.svg)](https://marketplace.visualstudio.com/items?itemName=wiggin77.codedox)
+
 This is an extension for [Visual Studio Code](https://code.visualstudio.com) that helps developers document their [Haxe](http://haxe.org/) code. 
 JSDoc style comments can be inserted including automatic generation of `@param` and `@return` tags.  File headers can be inserted with customizable
 copyright and license comments.

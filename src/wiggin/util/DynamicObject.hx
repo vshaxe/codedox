@@ -5,7 +5,7 @@ package wiggin.util;
  *  Taken and modified from  http://nadako.github.io/rants/posts/2014-05-21_haxe-dynamicobject.html
  *  Thanks, Dan.
  */
-abstract DynamicObject<T>(Dynamic<T>) from Dynamic<T> to Dynamic
+abstract DynamicObject<T>(Dynamic<T>) from Dynamic<T> to Dynamic<T>
 {
     public inline function new(?obj:Dynamic<T>) 
 	{
