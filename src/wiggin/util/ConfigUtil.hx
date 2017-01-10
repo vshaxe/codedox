@@ -56,53 +56,31 @@ class ConfigUtil
 	public static function update(config:WorkspaceConfiguration, strSection:String, update:Dynamic, ?scope=Scope.USER) : Promise<Void>
 	{
 		var prom = new Promise(function(resolve,reject) {
-			config = Vscode.workspace.getConfiguration();
-			var curr:DynamicObject<Dynamic> = config.get(strSection, null);
-			if(curr != null)
+			var inspect = config.inspect(strSection);
+			var curr:DynamicObject<Dynamic>;
+			if(inspect != null)
 			{
-				// Remove any properties not in scope.
-				curr = StructUtil.deepClone(curr, function(key,val){return filterForScope(key,val,config,scope,strSection);});
+				switch(scope)
+				{
+					case Scope.USER:
+						curr = inspect.globalValue;
+					case Scope.WORKSPACE:
+						curr = inspect.workspaceValue;
+					case Scope.DEFAULT:
+						curr = inspect.defaultValue;
+					default:
+						curr = {};
+				}
 			}
 			else
 			{
-				curr = {};				
+				curr = {};
 			}
 
 			var merged = StructUtil.mergeStruct(curr, update);
 			config.update(strSection, merged, Scope.isGlobal(scope)).then(resolve,reject);
 		});
 		return prom;
-	}
-
-	/**
-	 *  Returns true if the key/val exists within the specified `Scope`.
-	 *  @param key - key name to check
-	 *  @param val - value of key
-	 *  @param config - the `WorkspaceConfiguration`
-	 *  @param scope - the `Scope` to check
-	 *  @param parentKey - prefix to the key to make it fully qualified
-	 *  @return Bool
-	 */
-	private static function filterForScope(key:String, val:Dynamic, config:WorkspaceConfiguration, scope:Scope, parentKey:String) : Bool
-	{
-		var bRet = false;
-		var keyFull = (parentKey != null) ? parentKey + "." + key : key;
-		var inspect = config.inspect(keyFull);
-		if(inspect != null)
-		{
-			switch(scope)
-			{
-				case Scope.USER:
-					bRet = inspect.globalValue == val;
-				case Scope.WORKSPACE:
-					bRet = inspect.workspaceValue == val;
-				case Scope.DEFAULT:
-					bRet = inspect.defaultValue == val;
-				default:
-					bRet = false;
-			}
-		}
-		return bRet;
 	}
 
 	/**
