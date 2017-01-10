@@ -84,9 +84,17 @@ class StructUtil
 	 *  Test: http://try.haxe.org/#A741B
 	 *  
 	 *  @param struct - the source.
-	 *  @return Dynamic - an exact copy of the source
+	 *  @param ?filterCallback - optional callback, called for every non-struct property
+	 *  						 which returns true if the property should be copied, false
+	 *							 if if should be skipped
+	 *  @return Dynamic - a copy of the source, possibly filtered
 	 */
-	public static function deepClone(struct:Dynamic) : Dynamic
+	public static function deepClone(struct:Dynamic, ?filterCallback:String->Dynamic->Bool = null) : Dynamic
+	{
+		return cloner(struct, filterCallback);
+	}
+
+	private static function cloner(struct:Dynamic, filterCallback:String->Dynamic->Bool, parentKey:String = null) : Dynamic
 	{
 		if(struct == null) return null;
 
@@ -95,18 +103,22 @@ class StructUtil
 
 		for(key in input.keys())
 		{
+			var keyFull = (parentKey != null) ? parentKey + "." + key : key;
 			var val = input.get(key);
 			if(isStruct(val))
 			{
-				copy.set(key, deepClone(val));
+				copy.set(key, cloner(val, filterCallback, keyFull));
 			}
 			else
 			{
-				copy.set(key, val);
+				if(filterCallback == null || filterCallback(keyFull, val))
+				{
+					copy.set(key, val);
+				}
 			}
 		}
 		return copy;
-	}
+	} 
 
 } // end of ConfigUtil class 
 
