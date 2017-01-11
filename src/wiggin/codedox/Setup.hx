@@ -27,6 +27,8 @@ import wiggin.codedox.License;
 import wiggin.util.ConfigUtil;
 import wiggin.util.StructUtil;
 import wiggin.util.StringUtil;
+import wiggin.util.DynamicObject;
+
 
 typedef Transaction = {scope:Scope, obj:{}}
 
@@ -155,7 +157,11 @@ class Setup
 				{
 					if(StringUtil.hasChars(strInput))
 					{
-						var update = {fileheader:{params:{"*":{company:strInput}}}};
+						var editor = Vscode.window.activeTextEditor;
+						var paramBranch = (editor != null) ? editor.document.languageId : "*";
+						var param:DynamicObject<Dynamic> = {};
+						param.set(paramBranch, {company:strInput});
+						var update = {fileheader:{params:param}};
 						m_transaction.obj = StructUtil.mergeStruct(m_transaction.obj, update);
 						resolve(true);
 					}
@@ -227,7 +233,7 @@ class Setup
 		var config = Vscode.workspace.getConfiguration();
 		var strCompany= null;
 		var editor = Vscode.window.activeTextEditor;
-		if(editor == null)
+		if(editor != null)
 		{
 			strCompany = config.get(FileHeader.PARAMS + "." + editor.document.languageId + ".company", null);
 		}

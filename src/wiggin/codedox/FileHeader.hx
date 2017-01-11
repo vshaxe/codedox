@@ -32,6 +32,7 @@ import wiggin.codedox.License;
 import wiggin.util.JsonUtil;
 import wiggin.util.RegExUtil;
 import wiggin.util.ConfigUtil;
+import wiggin.util.StructUtil;
 
 /**
  *  Implements command for inserting file header at top of files.
@@ -156,11 +157,9 @@ class FileHeader
 	 */
 	private function populateTemplate(config:WorkspaceConfiguration, strTemplate:String, strLang:String) : String
 	{
-		var params:Dynamic = config.get(PARAMS + "." + strLang, null);
-		if(params == null)
-		{
-			params = config.get(PARAMS + ".*", null);
-		}
+		var paramsStar:Dynamic = config.get(PARAMS + ".*", null);
+		var paramsLang:Dynamic = config.get(PARAMS + "." + strLang, null);
+		var params:Dynamic = StructUtil.mergeStruct(paramsStar, paramsLang);
 
 		var mapParams:Map<String,Dynamic> = JsonUtil.isStruct(params) ? JsonUtil.structToMap(params) : new Map();
 

@@ -29,10 +29,12 @@ import vscode.TextEditorEdit;
 import vscode.TextDocumentChangeEvent;
 import vscode.TextLine;
 import vscode.Selection;
+import vscode.Position;
 import wiggin.codedox.FileHeader;
 import wiggin.codedox.Commenter;
 import wiggin.util.StringUtil;
 import wiggin.util.ParseUtil;
+using StringTools;
 
 typedef Settings = {autoInsert:Bool, autoInsertHeader:Bool, strCommentBegin:String, strCommentEnd:String, 
 					strCommentPrefix:String, strCommentDescription:String, strCommentTrigger:String, 
@@ -274,34 +276,47 @@ class CodeDox
 
 			if(StringUtil.hasChars(strChangeText))
 			{
-				if(m_commenter != null && m_commenter.isInsertPending && strChangeText.indexOf(settings.strCommentDescription) != -1)
+				if(m_commenter != null && m_commenter.isInsertPending)
 				{
+					// A comment insert was just performed and we need to put the cursor in the right place, and possibly
+					// select a comment decription so the user can just start typing to overwrite it.
 					m_commenter.isInsertPending = false;
-					var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentDescription);
-					if(ft != null)
+					if(strChangeText.indexOf(settings.strCommentDescription) != -1)
 					{
-						var sel:Selection = new Selection(ft.posEnd, ft.posStart);
-						editor.selection = sel;
+						var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentDescription);
+						if(ft != null)
+						{
+							editor.selection = new Selection(ft.posEnd, ft.posStart);
+						}
+					}
+					else if(strChangeText.trim() == settings.strCommentBegin + "  " + settings.strCommentEnd)
+					{
+						var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentBegin);
+						if(ft != null)
+						{
+							var p:Position = new Position(ft.posEnd.line, ft.posEnd.character + 1);
+							editor.selection = new Selection(p, p);
+						}
 					}
 				}
 				else if(settings.autoInsertHeader && strChangeText == settings.strHeaderTrigger && 
 				        doc.offsetAt(change.range.end) == 1 && change.range.isEmpty)
 				{
+					// A header comment trigger was typed at the top of file. 
 					var line = doc.lineAt(0);
 					if(line.text == settings.strHeaderBegin)
 					{
-						//js.Node.setTimeout(function() { doHeaderInsert(line, editor); }, 0);
 						doHeaderInsert(line, editor);
 					}  
 				}
 				else if(settings.autoInsert && strChangeText == settings.strCommentTrigger || 
 				        strChangeText == settings.strCommentTrigger + settings.strAutoClosingClose)
 				{
+					// A function comment trigger was typed.
 					var line = doc.lineAt(change.range.start.line);
 					var strCheck = StringUtil.trim(line.text);
 					if(strCheck == settings.strCommentBegin || strCheck == settings.strCommentBegin + settings.strAutoClosingClose)
 					{
-						//js.Node.setTimeout(function() { doCommentInsert(line, editor); }, 0);
 						doCommentInsert(line, editor);
 					}
 				}

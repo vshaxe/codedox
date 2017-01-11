@@ -24,9 +24,11 @@ package wiggin.codedox;
 import vscode.TextEditorEdit;
 import vscode.TextEditor;
 import vscode.TextLine;
+import vscode.Position;
 import wiggin.util.StringUtil;
 import wiggin.util.MathUtil;
 import wiggin.util.ParseUtil;
+import wiggin.util.ParseUtil.Direction;
 
 typedef Param = {name:String, type:String}
 typedef FunctionInfo = {params:Array<Param>, retType:String, strIndent:String}
@@ -123,6 +125,14 @@ class Commenter
 				#end
 
 				strComment = composeComment(strIndent, arrParams, strReturnType);
+			}
+			else
+			{
+				// Figure out the indentation used by counting whitespace at the
+				// beginning of the next non-blank line.
+				var lineCheck:TextLine = ParseUtil.findLine(doc, new Position(posStart.line + 1, 0), Direction.Forward, ~/[^\s]+/);
+				var strIndent = (lineCheck != null) ? ParseUtil.getIndent(doc, lineCheck.range.start) : "";
+				strComment = strIndent + settings.strCommentBegin + "  " + settings.strCommentEnd + "\n";
 			}
 		}
 		return strComment;
