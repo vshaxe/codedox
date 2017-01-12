@@ -12,6 +12,7 @@
               the promise to resolve.
 - (DONE)  Handle */ and **/ auto close brackets; Haxe uses **/ for some reason
 
-- When preceeding a class declaration, create empty multi-line JSDoc.
+- When preceeding a class or abstract declaration , create empty multi-line JSDoc.
+	- add option for single or multiline doc for vars
 
-
+- Change comment "Description" to "Constructor" for function named "new"

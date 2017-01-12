@@ -11,7 +11,7 @@ This extension is best used as a companion to [vshaxe](https://marketplace.visua
 ## Usage
 
 1. Type `/*` at top of file to insert a file header.
-	- if no file header template has been configured then a simple setup wizard will ask a few questions and save the configuration
+	* if no file header template has been configured then a simple setup wizard will ask a few questions and save the configuration
 2. Position cursor before a function declaration and type `/**` to insert a JSDoc-style comment.
 3. Position cursor before a variable or class declaration and type `/**` to get an empty JSDoc-style comment, then press `enter` immediately to get a multiline comment.
 
@@ -33,14 +33,15 @@ File header and JSDoc-style comments can also be inserted using commands. Invoke
 A basic configuration can be created using the simple setup 'wizard'. This is triggered when typing `/*` at the top of a file for the first time, or by running the setup command using `F1` or `Ctrl-Shift-P`/`Cmd-Shift-P` and typing `Codedox: Setup ...`.
 
 The wizard will ask:
+
 1. Where you want the configuration saved (user or workspace)
 2. Which of the built-in license templates you want to use (if any)
-	- GNU Affero General Public License
-	- Apache License, Version 2.0
-	- GNU General Public License, Version 3.0
-	- MIT License
-	- Mozilla Public License, Version 2.0
-	- Simple copyright
+	* GNU Affero General Public License
+	* Apache License, Version 2.0
+	* GNU General Public License, Version 3.0
+	* MIT License
+	* Mozilla Public License, Version 2.0
+	* Simple copyright
 3. A company/author name to include in your copyright.  
 
 ## Advanced Configuration
@@ -101,6 +102,6 @@ ${license_mozillapl_2_0} | Mozilla Public License, Version 2.0
 ${license_none}          | Simple copyright
 
 ## Notes 
-* If you do not want an asterisk preceding each line of a comment, replace the `commentprefix` property with `"  "`. 
-* If you prefer only one space before each line of a comment, replace `commentprefix` with `"* "`. 
+* If you do not want an asterisk preceding each line of a comment, replace the `commentprefix` property with two spaces (`"  "`). 
+* If you prefer only one space before each line of a comment, replace `commentprefix` with asterisk plus onc space (`"* "`). 
 * Feature requests. comments, etc, are welcome.
