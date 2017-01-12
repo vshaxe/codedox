@@ -191,18 +191,13 @@ class Setup
 			ConfigUtil.update(config, CodeDox.EXTENSION_NAME, m_transaction.obj, m_transaction.scope).then(
 				function(Void)
 				{
-					#if debug
-					trace(CodeDox.EXTENSION_NAME + "Config updated successfully.");
-					#end
-
+					CodeDox.log(CodeDox.EXTENSION_NAME + "Config updated successfully.");
 					resolve(true);
 				}, 
 				function(reason)
 				{
-					#if debug
-					trace("Failed to update " + CodeDox.EXTENSION_NAME + " config.");
-					trace(reason);
-					#end
+					CodeDox.log("Failed to update " + CodeDox.EXTENSION_NAME + " config.");
+					CodeDox.log(reason);
 
 					var str = (m_transaction.scope == Scope.USER) ? "user settings.json" : "workspace settings.json";
 					reject('Error updating config. Check for errors in your ${str} and try again.');

@@ -34,6 +34,8 @@ import wiggin.util.RegExUtil;
 import wiggin.util.ConfigUtil;
 import wiggin.util.StructUtil;
 
+typedef SetupCompleteContext = {count:Int, strLang:String}
+
 /**
  *  Implements command for inserting file header at top of files.
  */
@@ -85,28 +87,21 @@ class FileHeader
 	 */
 	private function getFileHeader(strLang:String) : String
 	{
-		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration();
-
-		var strTemplate = getTemplate(config, strLang);
-		strTemplate = populateTemplate(config, strTemplate, strLang);
+		var strTemplate = getTemplate(strLang);
+		strTemplate = populateTemplate(strTemplate, strLang);
 		return strTemplate + "\n";
 	}
 
 	/**
 	 *  Fetches the template associated with the language id or the default.
 	 *
-	 *  @param config - the `WorkspaceConfiguration` containing settings
 	 *  @param strLang - the language id for the current editor document. e.g. "haxe"
 	 *  @return String - the formatted template ready to be inserted into document 
 	 */
-	private function getTemplate(config:WorkspaceConfiguration, strLang:String) : String
+	private function getTemplate(strLang:String) : String
 	{
-		var template:Array<String> = config.get(TEMPLATES + "." + strLang, null);
-		if(template == null)
-		{
-			template = config.get(TEMPLATES + ".*", null);
-		}
-
+		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration();
+		var template:Array<String> = getTemplateConfig(strLang);
 		if(template == null || template.length == 0)
 		{
 			if(config.get(CodeDox.EXTENSION_NAME + ".neverAskTemplate", false))
@@ -121,11 +116,12 @@ class FileHeader
 			Vscode.window.showErrorMessage(msg, item1, item2, item3).then(function(item:MessageItem){
 				if(item.title == item1.title)
 				{
-					Vscode.commands.executeCommand(CodeDox.CMD_SETUP).then(onSetupComplete);
+					var ctx:SetupCompleteContext = {count:0, strLang:strLang};
+					Vscode.commands.executeCommand(CodeDox.CMD_SETUP).then(function(bResult){onSetupComplete(bResult,ctx);});
 				}
 				else if(item.title == item3.title)
 				{
-					setNeverAsk(config);	
+					setNeverAsk();	
 				}
 			});
 			template = [""]; // This will erase what the user typed.
@@ -137,13 +133,46 @@ class FileHeader
 	 *  Called after the Setup wizard was triggered during file header insertion.
 	 *  @param bResult - true if the wizard completed successfully
 	 */
-	private function onSetupComplete(bResult:Bool) : Void
+	private function onSetupComplete(bResult:Bool, cxt:SetupCompleteContext) : Void
 	{
 		if(bResult)
 		{
-			// Now that the setup wizard has created a minimal config, re-run the insert header command.
-			js.Node.setTimeout(function(){Vscode.commands.executeCommand(CodeDox.CMD_INSERT_FILE_HEADER);}, 1000);
+			// Work-around:  despite waiting for the Promise to resolve, sometimes the workspace config update
+			//               is not available for reading right away. The latency seems to vary based on machine
+			//               and load?  Here we'll try a few times then give up.
+			var template = getTemplateConfig(cxt.strLang);
+			if(template == null || template.length == 0)
+			{
+				if(cxt.count <= 10)
+				{
+					CodeDox.log("template still empty. Trying again, count=" + cxt.count);
+					cxt.count++;
+					js.Node.setTimeout(function(){onSetupComplete(bResult,cxt);}, 250);	
+				}
+			}
+			else
+			{
+				// Now that the setup wizard has created a minimal config, re-run the insert header command.
+				js.Node.setTimeout(function(){Vscode.commands.executeCommand(CodeDox.CMD_INSERT_FILE_HEADER);}, 10);
+			}
 		}
+	}
+
+	/**
+	 *  Fetches the raw template data associated with the language id or the default.
+	 *
+	 *  @param strLang - the language id for the current editor document. e.g. "haxe"
+	 *  @return Array<String> - the raw template data 
+	 */
+	private function getTemplateConfig(strLang:String) : Array<String>
+	{
+		var config = Vscode.workspace.getConfiguration();
+		var template:Array<String> = config.get(TEMPLATES + "." + strLang, null);
+		if(template == null)
+		{
+			template = config.get(TEMPLATES + ".*", null);
+		}
+		return template;
 	}
 
 	/**
@@ -155,8 +184,9 @@ class FileHeader
 	 *  @param strLang - the language id for the current editor document. e.g. "haxe"
 	 *  @return String - the populated  template 
 	 */
-	private function populateTemplate(config:WorkspaceConfiguration, strTemplate:String, strLang:String) : String
+	private function populateTemplate(strTemplate:String, strLang:String) : String
 	{
+		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration();
 		var paramsStar:Dynamic = config.get(PARAMS + ".*", null);
 		var paramsLang:Dynamic = config.get(PARAMS + "." + strLang, null);
 		var params:Dynamic = StructUtil.mergeStruct(paramsStar, paramsLang);
@@ -290,24 +320,20 @@ class FileHeader
 
 	/**
 	 *  Updates the user's config so that it will never offer to choose a default template.
-	 *  @param config - the `WorkspaceConfiguration` to write to
 	 */
-	private static function setNeverAsk(config:WorkspaceConfiguration) : Void
+	private static function setNeverAsk() : Void
 	{
+		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration();
 		var update = {neverAskTemplate:true};
 		ConfigUtil.update(config, CodeDox.EXTENSION_NAME, update).then(
 			function(Void)
 			{
-				#if debug
-				trace(CodeDox.EXTENSION_NAME + ".neverAskTemplate set to true successfully.");
-				#end
+				CodeDox.log(CodeDox.EXTENSION_NAME + ".neverAskTemplate set to true successfully.");
 			}, 
 			function(result)
 			{
-				#if debug
-				trace("Failed to set " + CodeDox.EXTENSION_NAME + ".neverAskTemplate");
-				trace(result);
-				#end
+				CodeDox.log("Failed to set " + CodeDox.EXTENSION_NAME + ".neverAskTemplate");
+				CodeDox.log(result);
 			}
 		);
 	}

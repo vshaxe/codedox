@@ -66,9 +66,7 @@ class Commenter
 		}
 		else
 		{
-			#if debug
-			trace("insertComment aborted: no function to parse");
-			#end 
+			CodeDox.log("insertComment aborted: no function to parse");
 		}
 	}
 
@@ -116,12 +114,12 @@ class Commenter
 				var arrParams = parseParams(strParams, doc.languageId);
 
 				#if debug
-				trace("*****");
-				trace('Indent Len=' + strIndent.length);
-				trace('Indent=' + StringUtil.escapeWhitespace(strIndent));
-				trace('params=${arrParams}');
-				trace('return=${strReturnType}');
-				trace("*****");
+				CodeDox.log("*****");
+				CodeDox.log('Indent Len=' + strIndent.length);
+				CodeDox.log('Indent=' + StringUtil.escapeWhitespace(strIndent));
+				CodeDox.log('params=${arrParams}');
+				CodeDox.log('return=${strReturnType}');
+				CodeDox.log("*****");
 				#end
 
 				strComment = composeComment(strIndent, arrParams, strReturnType);

@@ -15,6 +15,7 @@
 				"${workspaceRoot}/out/**/*.js"
 			],
 			"preLaunchTask": "haxe",
+			"internalConsoleOptions": "openOnSessionStart",
 			"smartStep": true
         }
     ]

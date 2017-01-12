@@ -1,9 +1,8 @@
-
 package ;
 
-class Test
+class Test 
 {
-	private var m_strToken:String;
+	private var m_strToken:String;  
 
 	public static function main()
 	{

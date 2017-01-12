@@ -10,17 +10,6 @@
         //["build-cpp.hxml"]
     ],
 	// Codedox settings
-	"codedox": {
-		"fileheader": {
-			"params": {
-				"*": {
-					"company": "WS_Company",
-					"author": "Ws_author"
-				},
-				"haxe": {
-					"author": "haxe_ws_author"
-				}
-			}
-		}
-	}
+    "codedox": {
+    }
 }

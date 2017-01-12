@@ -79,7 +79,7 @@
 							"default": true
 						},
 						"neverAskTemplate": {
-							"description": "If true then never asks to select default template",
+							"description": "If true then never asks to select default template via setup wizard",
 							"type": "boolean",
 							"default": false
 						},

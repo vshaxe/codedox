@@ -38,8 +38,8 @@ using StringTools;
 
 typedef Settings = {autoInsert:Bool, autoInsertHeader:Bool, strCommentBegin:String, strCommentEnd:String, 
 					strCommentPrefix:String, strCommentDescription:String, strCommentTrigger:String, 
-					strAutoClosingClose:String, strHeaderBegin:String, strHeaderEnd:String, strHeaderPrefix:String,
-					strHeaderTrigger:String, }
+					strAutoClosingClose:String, strAutoClosingCloseAlt:String, strHeaderBegin:String, 
+					strHeaderEnd:String, strHeaderPrefix:String, strHeaderTrigger:String, }
 
 /**
  *  Main extension class.
@@ -88,13 +88,6 @@ class CodeDox
 		m_commenter = null;
 		s_extPath = context.extensionPath;
 
-		// Check for first run.
-		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(EXTENSION_NAME);
-		if(config.get("firstrun", -1) == -1)
-		{
-			initFirstRun(config);
-		}
-
 		context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void){s_settings=null;}));
 		context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument(onTextChange));
 
@@ -103,6 +96,7 @@ class CodeDox
 		registerTextEditorCommand(context, CMD_INSERT_COMMENT, insertComment);
 
 		// Add onEnter rules.
+		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(EXTENSION_NAME);
 		var bAutoPrefixOnEnter = config.get("autoPrefixOnEnter", true);
 		var strCommentPrefix = config.get("commentprefix", "*  ");
 		if(bAutoPrefixOnEnter)
@@ -310,12 +304,15 @@ class CodeDox
 					}  
 				}
 				else if(settings.autoInsert && strChangeText == settings.strCommentTrigger || 
-				        strChangeText == settings.strCommentTrigger + settings.strAutoClosingClose)
+				        strChangeText == settings.strCommentTrigger + settings.strAutoClosingClose ||
+						strChangeText == settings.strCommentTrigger + settings.strAutoClosingCloseAlt)
 				{
 					// A function comment trigger was typed.
 					var line = doc.lineAt(change.range.start.line);
 					var strCheck = StringUtil.trim(line.text);
-					if(strCheck == settings.strCommentBegin || strCheck == settings.strCommentBegin + settings.strAutoClosingClose)
+					if(strCheck == settings.strCommentBegin || 
+					   strCheck == settings.strCommentBegin + settings.strAutoClosingClose ||
+					   strCheck == settings.strCommentBegin + settings.strAutoClosingCloseAlt)
 					{
 						doCommentInsert(line, editor);
 					}
@@ -385,12 +382,23 @@ class CodeDox
 		{
 			Vscode.window.showErrorMessage(strMsg + strExp);
 
-			trace(strMsg + strExp);
+			log(strMsg + strExp);
 			if(stack != null)
 			{
-				trace(haxe.CallStack.toString(stack));
+				log(haxe.CallStack.toString(stack));
 			}
 		}
+	}
+
+	/**
+	 *  Logs message to console via trace.
+	 *  @param msg - message to output
+	 */
+	public static function log(msg:Dynamic, ?pos:haxe.PosInfos) : Void
+	{
+		#if debug
+		trace(Std.string(msg), pos);
+		#end
 	}
 
 	/**
@@ -420,7 +428,8 @@ class CodeDox
 			var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(EXTENSION_NAME);
 			var strCommentBegin = config.get("commentbegin", "/**");
 			var strHeaderBegin = config.get("headerbegin", "/*");
-			var strAutoClose = getAutoClosingClose(strCommentBegin);
+			var strAutoClose = getAutoClosingClose(strCommentBegin, false);
+			var strAutoCloseAlt = getAutoClosingClose(strCommentBegin, true);
 
 			s_settings = {
 				autoInsert: config.get("autoInsert", true),
@@ -431,6 +440,7 @@ class CodeDox
 				strCommentDescription: config.get("commentdescription", "[Description]"),
 				strCommentTrigger: StringUtil.right(strCommentBegin, 1),
 				strAutoClosingClose: (strAutoClose != null) ? strAutoClose : "",
+				strAutoClosingCloseAlt: (strAutoCloseAlt != null) ? strAutoCloseAlt : "",
 				strHeaderBegin: config.get("headerbegin", "/*"),
 				strHeaderEnd: config.get("headerend", "*/"),
 				strHeaderPrefix: config.get("headerprefix", " *"),
@@ -454,38 +464,23 @@ class CodeDox
 	 *  e.g. "\**" is usually closed with "*\".
 	 *  
 	 *  @param strAutoClosingOpen - the opening string of an autoclosing pair
+	 *  @param bAlt - true if the alternative close pair is to be returned
 	 *  @return String or null
 	 */
-	private static function getAutoClosingClose(strAutoClosingOpen:String) : Null<String>
+	private static function getAutoClosingClose(strAutoClosingOpen:String, ?bAlt = false) : Null<String>
 	{
 		// Dammit. Vscode won't let me lookup the LanguageConfiguration settings.
 		// Maybe this will be added in the future: https://github.com/Microsoft/vscode/issues/2871
-
-		//var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration();
-		//var arr = config.get("haxe.configuration.autoClosingPairs", ["empty"]);
 
 		// We'll have to hack something for now...
 		return switch(strAutoClosingOpen)
 		{
 			// For some reason the Haxe extension configures vscode to autoclose with double asterisk.
-			case "/**": "**/";  
+			case "/**": (bAlt) ? "*/" : "**/";  
 
 			// Just reverse the open until we can read the real value??
 			default: StringUtil.reverse(strAutoClosingOpen);  
 		}
-	}
-
-	/**
-	 *  Called when the extension is run for the first time. Here we persist a default config
-	 *  so the user doesn't have to. 
-	 *  e.g. "\**" is usually closed with "*\".
-	 *  
-	 *  @param strAutoClosingOpen - the opening string of an autoclosing pair
-	 *  @return String or null
-	 */
-	private static function initFirstRun(config:WorkspaceConfiguration) : Void
-	{
-
 	}
 
 } // end of CodeDox class
