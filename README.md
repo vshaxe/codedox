@@ -107,5 +107,5 @@ ${license_none}          | Simple copyright
 
 ## Notes 
 * If you do not want an asterisk preceding each line of a comment, replace the `commentprefix` property with two spaces (`"  "`). 
-* If you prefer only one space before each line of a comment, replace `commentprefix` with asterisk plus onc space (`"* "`). 
+* If you prefer only one space before each line of a comment, replace `commentprefix` with asterisk plus one space (`"* "`). 
 * Feature requests. comments, etc, are welcome.
