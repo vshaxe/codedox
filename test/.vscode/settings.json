@@ -10,6 +10,18 @@
         //["build-cpp.hxml"]
     ],
 	// Codedox settings
-    "codedox": {
-    }
+	"codedox": {
+		"fileheader": {
+			"templates": {
+				"*": [
+					"${license_gpl_3_0}"
+				]
+			},
+			"params": {
+				"haxe": {
+					"company": "Nathan"
+				}
+			}
+		}
+	}
 }

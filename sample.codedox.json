@@ -3,6 +3,8 @@
 		"autoInsert": true,
 		"autoInsertHeader": true,
 		"autoPrefixOnEnter": true,
+		"paramFormat": "@param ${name} - ",
+		"returnFormat": "@return ${type}",
 		"commentprefix": "*  ",
 		"commentbegin": "/**",
 		"commentend": "*/",

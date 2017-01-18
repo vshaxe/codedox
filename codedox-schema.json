@@ -31,6 +31,16 @@
 					"type": "boolean",
 					"default": false
 				},
+				"paramFormat": {
+					"description": "Format of the @param tag, using ${name} and ${type} fields",
+					"type": "string",
+					"default": "@param ${name} - "
+				},
+				"returnFormat": {
+					"description": "Format of the @return tag, using ${type} field",
+					"type": "string",
+					"default": "@return ${type}"
+				},
 				"commentprefix": {
 					"description": "Per-line comment prefix",
 					"type": "string",

@@ -56,6 +56,8 @@ If you want to create a custom license/copyright template or want to change how 
     "autoInsert": true, // Enables insertion of function comments trigged by keystrokes
     "autoInsertHeader": true, // Enables insertion of file header triggered by keystrokes
     "autoPrefixOnEnter": true, // Enables 'on enter' rules
+	"paramFormat": "@param ${name} - ", // supports ${name} and ${type}, plus built-in params
+	"returnFormat": "@return ${type}", // supports ${type}, plus built-in params
     "commentprefix": "*  ",
     "commentbegin": "/**",
     "commentend": "*/",
@@ -87,6 +89,8 @@ Built-in parameters:
 
 Param         |  Result 
 --------------|---------------------
+${name}                  | variable name (function comments only)
+${type}                  | variable or function type (function comments only)
 ${year}                  | 2017
 ${month}                 | 1
 ${day}                   | 2

@@ -30,7 +30,7 @@ import vscode.Range;
 import vscode.MessageItem;
 import wiggin.codedox.License;
 import wiggin.util.JsonUtil;
-import wiggin.util.RegExUtil;
+import wiggin.util.ParamUtil;
 import wiggin.util.ConfigUtil;
 import wiggin.util.StructUtil;
 
@@ -192,60 +192,30 @@ class FileHeader
 		var params:Dynamic = StructUtil.mergeStruct(paramsStar, paramsLang);
 
 		var mapParams:Map<String,Dynamic> = JsonUtil.isStruct(params) ? JsonUtil.structToMap(params) : new Map();
-
-		addDefaultParams(mapParams, config);
-		var mapParamsNorm:Map<String,String> = normalizeParams(mapParams);
-
-		// Replace '${...}' fields with params.  Loop multiple times as params 
-		// can have nested params.
-		var bChanged = true;
-		var strChanged:String;
-		var regex:EReg;
-		while(bChanged)
-		{
-			bChanged = false;
-			for(key in mapParamsNorm.keys())
-			{
-				regex = new EReg(key, "gi");
-				strChanged = regex.replace(strTemplate, mapParamsNorm.get(key));
-				bChanged = bChanged || (strChanged != strTemplate);
-				strTemplate = strChanged; 
-			}
-		}
-		return strTemplate;
+		addDefaultParams(mapParams);
+		addDefaultLicenses(mapParams);
+		var strRet = ParamUtil.applyParams(strTemplate, mapParams);
+		return strRet;
 	}
 
 	/**
-	 *  Adds the default parameters to `map`. Default params are things like
+	 *  Adds the built-in parameters to `map`. Built-in params are things like
 	 *  current year, date, time, etc. 
 	 *
 	 *  @param map - the map to populate.
-	 *  @param config - the `WorkspaceConfiguration` containing settings
 	 */
-	private static function addDefaultParams(map:Map<String,Dynamic>, config:WorkspaceConfiguration) : Void
+	private static function addDefaultParams(map:Map<String,Dynamic>) : Void
 	{
-		var date = Date.now();
-
-		setIfAbsent(map, "year", Std.string(date.getFullYear()));
-		setIfAbsent(map, "month", Std.string(date.getMonth() + 1));
-		setIfAbsent(map, "day", Std.string(date.getDate()));
-
-		setIfAbsent(map, "timestamp", date.toString());
-		setIfAbsent(map, "time24h", DateTools.format(date, "%T"));
-
-		setIfAbsent(map, "date", DateTools.format(date, "%F"));
-		setIfAbsent(map, "time", DateTools.format(date, "%l:%M:%S %p"));
-
+		// Add the built-in params like current year, date, time, etc.
+		ParamUtil.addDefaultParams(map);
+		
 		var settings = CodeDox.getSettings();
-
-		setIfAbsent(map, "commentbegin", settings.strCommentBegin);
-		setIfAbsent(map, "commentprefix", settings.strCommentPrefix);
-		setIfAbsent(map, "commentend", settings.strCommentEnd);
-		setIfAbsent(map, "headerbegin", settings.strHeaderBegin);
-		setIfAbsent(map, "headerprefix", settings.strHeaderPrefix);
-		setIfAbsent(map, "headerend", settings.strHeaderEnd);
-
-		addDefaultLicenses(map);
+		ParamUtil.setIfAbsent(map, "commentbegin", settings.strCommentBegin);
+		ParamUtil.setIfAbsent(map, "commentprefix", settings.strCommentPrefix);
+		ParamUtil.setIfAbsent(map, "commentend", settings.strCommentEnd);
+		ParamUtil.setIfAbsent(map, "headerbegin", settings.strHeaderBegin);
+		ParamUtil.setIfAbsent(map, "headerprefix", settings.strHeaderPrefix);
+		ParamUtil.setIfAbsent(map, "headerend", settings.strHeaderEnd);
 	}
 
 	/**
@@ -260,62 +230,8 @@ class FileHeader
 		var arr:Array<License> = wiggin.codedox.Setup.getDefaultLicenses();
 		for(license in arr)
 		{
-			setIfAbsent(map, license.name, license.text.join("\n"));
+			ParamUtil.setIfAbsent(map, license.name, license.text.join("\n"));
 		}
-	}
-
-	/**
-	 *  Utility method to set map entries only if no mapping exists.
-	 *
-	 *  @param map - the map to populate
-	 *  @param strKey - the key to check
-	 *  @param strValue - the value to set
-	 */
-	private static inline function setIfAbsent(map:Map<String,Dynamic>, strKey:String, strValue:String) : Void
-	{
-		if(!map.exists(strKey))
-		{
-			map.set(strKey, strValue);
-		}
-	}
-
-	/**
-	 *  Takes a `Map` of dynamic values and converts to a map of strings.
-	 *  Also converts the keys to "${...}" fields, properly escaped for regex.
-	 *
-	 *  @param map - the map to convert
-	 *  @return converted map
-	 */
-	private function normalizeParams(params:Map<String,Dynamic>) : Map<String,String>
-	{
-		var map = new Map<String,String>();
-		var val:Dynamic;
-		var str:String;
-		for(key in params.keys())
-		{
-			val = params.get(key);
-			if(Std.is(val, Array))
-			{
-				var arrString:Array<String> = [];
-				var arr:Array<Dynamic> = cast(val, Array<Dynamic>);
-				for(elem in arr)
-				{
-					arrString.push(Std.string(elem));
-				}
-				str = arrString.join("\n");
-			}
-			else 
-			{
-				str = Std.string(val);
-			}
-
-			if(str != null && str.length > 0)
-			{
-				var strKeyEsc = RegExUtil.escapeRegExPattern("${" + key + "}"); 
-				map.set(strKeyEsc, str);
-			}
-		}
-		return map;
 	}
 
 	/**

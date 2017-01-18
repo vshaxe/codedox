@@ -29,6 +29,7 @@ import wiggin.util.StringUtil;
 import wiggin.util.MathUtil;
 import wiggin.util.ParseUtil;
 import wiggin.util.ParseUtil.Direction;
+import wiggin.util.ParamUtil;
 
 typedef Param = {name:String, type:String}
 typedef FunctionInfo = {params:Array<Param>, retType:String, strIndent:String}
@@ -114,12 +115,22 @@ class Commenter
 				var arrParams = parseParams(strParams, doc.languageId);
 
 				#if debug
-				CodeDox.log("*****");
-				CodeDox.log('Indent Len=' + strIndent.length);
-				CodeDox.log('Indent=' + StringUtil.escapeWhitespace(strIndent));
-				CodeDox.log('params=${arrParams}');
-				CodeDox.log('return=${strReturnType}');
-				CodeDox.log("*****");
+				var sb = new StringBuf();
+				sb.add("*****\n");
+				sb.add('Indent Len=');
+				sb.add(strIndent.length);
+				sb.add("\n");
+				sb.add('Indent=');
+				sb.add(StringUtil.escapeWhitespace(strIndent));
+				sb.add("\n");
+				sb.add('params=');
+				sb.add(arrParams);
+				sb.add("\n");
+				sb.add('return=');
+				sb.add(strReturnType);
+				sb.add("\n");
+				sb.add("*****\n");
+				CodeDox.log(sb.toString());
 				#end
 
 				strComment = composeComment(strIndent, arrParams, strReturnType);
@@ -179,26 +190,34 @@ class Commenter
 		sb.add(settings.strCommentDescription);
 		sb.add("\n");
 
-		if(arrParams != null)
+		if(arrParams != null && StringUtil.hasChars(settings.strParamFormat))
 		{		
 			for(item in arrParams)
 			{
 				sb.add(strIndent);
 				sb.add(" ");
 				sb.add(settings.strCommentPrefix);
-				sb.add("@param ");
-				sb.add(item.name);
-				sb.add(" - \n");
+
+				var mapP = ["name" => item.name, "type" => item.type];
+				ParamUtil.addDefaultParams(mapP);
+				var strP = ParamUtil.applyParams(settings.strParamFormat, mapP);
+				sb.add(strP);
+				
+				sb.add("\n");
 			}
 		}
 
-		if(StringUtil.hasChars(strReturnType) && strReturnType != "Void")
+		if(StringUtil.hasChars(strReturnType) && strReturnType != "Void" && StringUtil.hasChars(settings.strReturnFormat))
 		{
 			sb.add(strIndent);
 			sb.add(" ");
 			sb.add(settings.strCommentPrefix);
-			sb.add("@return ");
-			sb.add(strReturnType);
+
+			var mapR = ["type" => strReturnType];
+			ParamUtil.addDefaultParams(mapR);
+			var strR = ParamUtil.applyParams(settings.strReturnFormat, mapR);
+			sb.add(strR);
+						
 			sb.add("\n");
 		}
 		sb.add(strIndent);

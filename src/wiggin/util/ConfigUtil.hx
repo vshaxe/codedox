@@ -48,6 +48,8 @@ class ConfigUtil
 	 * 	Updates the specified `WorkspaceConfiguration` by merging the `update` struct with
 	 *  the current configuration.
 	 *  
+	 *  @param  config - the `WorkspaceConfiguration` to update
+	 *  @param  strSection - the section within the config to update
 	 * 	@param	update - an anonymous struct to merge with the current config
 	 *  @param  ?scope - determines where to write the update - if `Scope.USER` then global (user) config is updated, 
 	 *  				 otherwise the workspace is updated

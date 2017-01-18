@@ -1,5 +1,8 @@
 # Codedox change log
 
+## 1.2.1
+* Allow customizable formats for @param and @return tags. [Issue 1](https://github.com/wiggin77/codedox/issues/1)
+
 ## 1.2.0
 * Setup wizard to create minimal config without editing settings.json by hand
 

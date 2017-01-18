@@ -36,9 +36,9 @@ import wiggin.util.StringUtil;
 import wiggin.util.ParseUtil;
 using StringTools;
 
-typedef Settings = {autoInsert:Bool, autoInsertHeader:Bool, strCommentBegin:String, strCommentEnd:String, 
-					strCommentPrefix:String, strCommentDescription:String, strCommentTrigger:String, 
-					strAutoClosingClose:String, strAutoClosingCloseAlt:String, strHeaderBegin:String, 
+typedef Settings = {autoInsert:Bool, autoInsertHeader:Bool, strParamFormat:String, strReturnFormat:String, 
+					strCommentBegin:String, strCommentEnd:String, strCommentPrefix:String, strCommentDescription:String, 
+					strCommentTrigger:String, strAutoClosingClose:String, strAutoClosingCloseAlt:String, strHeaderBegin:String, 
 					strHeaderEnd:String, strHeaderPrefix:String, strHeaderTrigger:String, }
 
 /**
@@ -397,7 +397,7 @@ class CodeDox
 	public static function log(msg:Dynamic, ?pos:haxe.PosInfos) : Void
 	{
 		#if debug
-		trace(Std.string(msg), pos);
+		haxe.Log.trace(Std.string(msg), pos);
 		#end
 	}
 
@@ -434,6 +434,8 @@ class CodeDox
 			s_settings = {
 				autoInsert: config.get("autoInsert", true),
 				autoInsertHeader: config.get("autoInsertHeader", true),
+				strParamFormat: config.get("paramFormat", "@param ${name} - "),
+				strReturnFormat: config.get("returnFormat", "@return ${type}"),
 				strCommentBegin: strCommentBegin,
 				strCommentEnd: config.get("commentend", "*/"),
 				strCommentPrefix: config.get("commentprefix", "*  "),
