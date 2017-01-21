@@ -9,6 +9,12 @@ class Test
 		trace(getMessage("Hello", 2));
 	}
 
+	/**
+	 *  [Description]
+	 *  @param str - 
+	 *  @param num - 
+	 *  @return String
+	 */
 	private static function getMessage(str:String, num:Int) : String
 	{
 		return "message: " + str + num;
@@ -21,5 +27,13 @@ class Test
 			map.set(Std.string(i), strMsg + " -- " + Std.string(i + 100));
 		}
 	}
+
+
+	public function makeIt(str:String, idx:Int, ?blap:Test) : Void
+	{
+		
+	}
+
+
 }
 

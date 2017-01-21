@@ -2,7 +2,7 @@
     "name": "codedox",
     "displayname": "Codedox for Haxe",
     "description": "Inserts JSDoc-style comments including @param and @return tags, plus customizable file header license and copyright comments.",
-    "version": "1.2.1",
+    "version": "1.2.2",
     "publisher": "wiggin77",
     "license": "(MIT) View license in LICENSE.md",
     "engines": {
@@ -93,6 +93,11 @@
                             "type": "string",
                             "default": "@return ${type}"
                         },
+						"allowOptionalArgs": {
+							"description": "If true, allows the '?' prefix for optional function args in @param tag",
+							"type": "boolean",
+							"default": false
+						},
                         "commentprefix": {
                             "description": "Per-line comment prefix",
                             "type": "string",

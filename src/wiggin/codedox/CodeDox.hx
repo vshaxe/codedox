@@ -39,7 +39,7 @@ using StringTools;
 typedef Settings = {autoInsert:Bool, autoInsertHeader:Bool, strParamFormat:String, strReturnFormat:String, 
 					strCommentBegin:String, strCommentEnd:String, strCommentPrefix:String, strCommentDescription:String, 
 					strCommentTrigger:String, strAutoClosingClose:String, strAutoClosingCloseAlt:String, strHeaderBegin:String, 
-					strHeaderEnd:String, strHeaderPrefix:String, strHeaderTrigger:String, }
+					strHeaderEnd:String, strHeaderPrefix:String, strHeaderTrigger:String, allowOptionalArgs:Bool }
 
 /**
  *  Main extension class.
@@ -446,7 +446,8 @@ class CodeDox
 				strHeaderBegin: config.get("headerbegin", "/*"),
 				strHeaderEnd: config.get("headerend", "*/"),
 				strHeaderPrefix: config.get("headerprefix", " *"),
-				strHeaderTrigger: StringUtil.right(strHeaderBegin, 1)
+				strHeaderTrigger: StringUtil.right(strHeaderBegin, 1),
+				allowOptionalArgs: config.get("allowOptionalArgs", false)
 			};
 		}
 		return s_settings;
