@@ -28,10 +28,9 @@ class Test
 		}
 	}
 
-
-	public function makeIt(str:String, idx:Int, ?blap:Test) : Void
+	public function makeCB(str:String, defCallback:String->Int->Bool, ?blap:Test) : String->Int->Bool
 	{
-		
+		return null;		
 	}
 
 

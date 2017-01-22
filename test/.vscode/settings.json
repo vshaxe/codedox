@@ -11,6 +11,7 @@
     ],
 	// Codedox settings
 	"codedox": {
+		"paramFormat": "@param {${type}} ${name} - ",
 		"fileheader": {
 			"templates": {
 				"*": [
