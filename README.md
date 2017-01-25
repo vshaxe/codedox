@@ -53,11 +53,12 @@ If you want to create a custom license/copyright template or want to change how 
 ```js
 {
   "codedox": {
-    "autoInsert": true, // Enables insertion of function comments trigged by keystrokes
-    "autoInsertHeader": true, // Enables insertion of file header triggered by keystrokes
-    "autoPrefixOnEnter": true, // Enables 'on enter' rules
+    "autoInsert": true, // enables insertion of function comments trigged by keystrokes
+    "autoInsertHeader": true, // enables insertion of file header triggered by keystrokes
+    "autoPrefixOnEnter": true, // enables 'on enter' rules
 	"paramFormat": "@param ${name} - ", // supports ${name} and ${type}, plus built-in params
 	"returnFormat": "@return ${type}", // supports ${type}, plus built-in params
+	"allowOptionalArgs": false, // false strips the '?' prefix from optional function args
     "commentprefix": "*  ",
     "commentbegin": "/**",
     "commentend": "*/",

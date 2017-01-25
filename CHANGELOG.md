@@ -1,5 +1,10 @@
 # Codedox change log
 
+## 1.2.2
+
+* Fix issue #3 - determine if indentation should use tabs based on function being documented, not `editor.insertSpaces`
+* Added option to include/remove the '?' prefix for optional function args in @param tags
+
 ## 1.2.1
 * Allow customizable formats for @param and @return tags. [Issue 1](https://github.com/wiggin77/codedox/issues/1)
 

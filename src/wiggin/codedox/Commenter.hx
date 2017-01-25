@@ -253,8 +253,10 @@ class Commenter
 				idxType = 1;
 		}
 
+
 		strParams = StringUtil.toEmptyIfNull(strParams);
 		var arrParams:Array<Param> = [];
+		var bAllowOptional = CodeDox.getSettings().allowOptionalArgs;
 
 		var arr = ParseUtil.splitByCommas(strParams);
 		for(item in arr)
@@ -266,7 +268,16 @@ class Commenter
 				var arrItem = item.split(strParamSeparator);
 				var strType = (arrItem.length > 1) ? arrItem[idxType] : "";
 				var strName = arrItem[MathUtil.min(arrItem.length - 1, idxName)];
-				arrParams.push({name:StringTools.trim(strName), type:StringTools.trim(strType)});
+
+				strType = StringTools.trim(strType);
+				strName = StringTools.trim(strName);
+
+				// Possibly remove "?" from optional params.
+				if(!bAllowOptional && StringTools.startsWith(strName, "?"))
+				{
+					strName = strName.substr(1);
+				}
+				arrParams.push({name:strName, type:strType});
 			}
 		}
 		return arrParams;

@@ -1,4 +1,8 @@
 {
+	"editor.renderWhitespace": "all",
+	"editor.tabSize": 4,
+	"editor.insertSpaces": false,
+
     // These are configurations used for haxe completion.
     //
     // Each configuration is an array of arguments that will be passed to the Haxe completion server,
@@ -11,6 +15,7 @@
     ],
 	// Codedox settings
 	"codedox": {
+		"paramFormat": "@param {${type}} ${name} - ",
 		"fileheader": {
 			"templates": {
 				"*": [

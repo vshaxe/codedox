@@ -41,6 +41,11 @@
 					"type": "string",
 					"default": "@return ${type}"
 				},
+				"allowOptionalArgs": {
+					"description": "If true, allows the '?' prefix for optional function args in @param tag",
+					"type": "boolean",
+					"default": false
+				},
 				"commentprefix": {
 					"description": "Per-line comment prefix",
 					"type": "string",

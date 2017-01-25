@@ -5,6 +5,7 @@
 		"autoPrefixOnEnter": true,
 		"paramFormat": "@param ${name} - ",
 		"returnFormat": "@return ${type}",
+		"allowOptionalArgs": false,
 		"commentprefix": "*  ",
 		"commentbegin": "/**",
 		"commentend": "*/",
