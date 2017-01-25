@@ -253,7 +253,6 @@ class Commenter
 				idxType = 1;
 		}
 
-
 		strParams = StringUtil.toEmptyIfNull(strParams);
 		var arrParams:Array<Param> = [];
 		var bAllowOptional = CodeDox.getSettings().allowOptionalArgs;

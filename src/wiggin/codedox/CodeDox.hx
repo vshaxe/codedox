@@ -404,7 +404,7 @@ class CodeDox
 	/**
 	 *  Returns true if the language id is supported by this extension.
 	 *  @param strLangId - the language id to check
-	 @  @return Bool
+	 *  @return Bool
 	 */
 	private inline function isLangaugeSupported(strLangId:String) : Bool
 	{
