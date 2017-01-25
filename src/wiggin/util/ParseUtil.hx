@@ -250,6 +250,17 @@ class ParseUtil
 	 *  @param line - the `TextLine` containing the `function` keyword
 	 *  @return String - tabs and/or spaces enough to fill the calculated indent 
 	 */
+
+
+	/**
+	 *  Returns a string containing the right amount of tabs and/or spaces based 
+	 *  on the config settings.  Indent is calculated by counting the whitespace 
+	 *  at the beginning of the previous non-whitespace line relative to
+	 *  `pos`.
+	 *  @param doc - the `TextDocument` to search
+	 *  @param pos - the `Position` in the document to search from
+	 *  @return String - containing only whitespace
+	 */
 	public static function getIndent(doc:TextDocument, pos:Position) : String
 	{
 		var workspace = Vscode.workspace;
@@ -257,23 +268,39 @@ class ParseUtil
 
 		var iTabSize = settings.get("editor.tabSize", 1);
 		var bInsertSpaces = settings.get("editor.insertSpaces", true);
-		var iIndent = 0;
 
-		// Find the previous non-whitespace line. 
+		// Find the closest non-whitespace line. 
+		var strIndent:String;
 		var line = ParseUtil.findLine(doc, pos, Direction.Backward, ~/[^\s]/);
 		if(line != null && StringTools.startsWith(line.text, "{"))
 		{
 			// Opening bracket on first character means we're at the beginning of a type so 
 			// just indent one tab stop.
-			iIndent = iTabSize;
+			strIndent = makeIndent(iTabSize, bInsertSpaces, iTabSize);
+		}
+		else if(line != null)
+		{
+			// Use the indent of this found line.
+			strIndent = line.text.substring(0, line.firstNonWhitespaceCharacterIndex);
 		}
 		else
 		{
-			// Use the indent of this found line.
-			var strSpace = line.text.substring(0, line.firstNonWhitespaceCharacterIndex);
-			iIndent = StringUtil.replaceAll(strSpace, "\t", StringUtil.padTail("", iTabSize, " ")).length;
+			// Could not determine indent.
+			strIndent = "";
 		}
+		return strIndent;
+	}
 
+	/**
+	 *  Generates a string with `iIndent` characters of whitespace, using either all spaces
+	 *  or the optimal combination of tabs and spaces.
+	 *  @param iIndent - the amount of whitespace needed
+	 *  @param bInsertSpaces - if true then only use spaces, otherwise tabs and spaces
+	 *  @param iTabSize - tab width in characters
+	 *  @return String - a string containing only whitespace
+	 */
+	public static function makeIndent(iIndent:Int, bInsertSpaces:Bool, iTabSize:Int) : String
+	{
 		var strIndent:String;
 		if(bInsertSpaces)
 		{
