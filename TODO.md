@@ -16,3 +16,5 @@
 	- add option for single or multiline doc for vars
 
 - Change comment "Description" to "Constructor" for function named "new"
+
+- Support @extends and @implements for type comments
