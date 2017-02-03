@@ -260,7 +260,7 @@ class CodeDox
 			}
 
 			var editor = Vscode.window.activeTextEditor;
-			if(editor.document != doc)
+			if(editor == null || editor.document != doc)
 			{
 				return;
 			}
