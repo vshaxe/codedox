@@ -17,15 +17,15 @@
 	"codedox": {
 		"paramFormat": "@param {${type}} ${name} - ",
 		"fileheader": {
-			"templates": {
-				"*": [
-					"${license_gpl_3_0}"
-				]
-			},
 			"params": {
 				"haxe": {
-					"company": "Nathan"
+					"company": "Wiggin77"
 				}
+			},
+			"templates": {
+				"*": [
+					"${license_mit}"
+				]
 			}
 		}
 	}

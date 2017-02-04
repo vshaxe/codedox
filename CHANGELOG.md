@@ -1,5 +1,11 @@
 # Codedox change log
 
+## 1.2.3
+
+* Fix "window.activeTextEditor can be null" via [Gamma11 PR](https://github.com/wiggin77/codedox/pull/5)
+* Fix [issue 4](https://github.com/wiggin77/codedox/issues/4) Debug output in release.
+* Fixed README typos
+
 ## 1.2.2
 
 * Fix [issue 3](https://github.com/wiggin77/codedox/issues/3) - determine if indentation should use tabs based on function being documented, not `editor.insertSpaces`

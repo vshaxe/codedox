@@ -2,7 +2,7 @@
     "name": "codedox",
     "displayname": "Codedox for Haxe",
     "description": "Inserts JSDoc-style comments including @param and @return tags, plus customizable file header license and copyright comments.",
-    "version": "1.2.2",
+    "version": "1.2.3",
     "publisher": "wiggin77",
     "license": "(MIT) View license in LICENSE.md",
     "engines": {
@@ -38,7 +38,7 @@
     ],
     "main": "./out/codedox",
     "scripts": {
-        "vscode:prepublish": "haxe build.hxml"
+        "vscode:prepublish": "haxe build-release.hxml"
     },
     "contributes": {
         "commands": [
