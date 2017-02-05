@@ -1,5 +1,5 @@
 -cp src
--lib vscode-extern
+-lib vscode
 -debug
 -js out/codedox.js
 wiggin.codedox.CodeDox

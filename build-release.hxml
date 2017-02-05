@@ -1,4 +1,4 @@
 -cp src
--lib vscode-extern
+-lib vscode
 -js out/codedox.js
 wiggin.codedox.CodeDox

@@ -1,5 +1,4 @@
 -cp ./
--lib vscode-extern
 -debug
 -js test.js
 Test
