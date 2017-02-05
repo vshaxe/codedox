@@ -29,5 +29,10 @@ class Test
 		return null;		
 	}
 
+	public function paramInference(foo)
+	{
+
+	}
+
 }
 

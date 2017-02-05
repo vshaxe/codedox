@@ -85,7 +85,7 @@ class ParamUtil
 				str = Std.string(val);
 			}
 
-			if(str != null && str.length > 0)
+			if(str != null)
 			{
 				var strKeyEsc = RegExUtil.escapeRegExPattern("${" + key + "}"); 
 				map.set(strKeyEsc, str);
