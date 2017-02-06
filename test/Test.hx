@@ -29,5 +29,16 @@ class Test
 		return null;		
 	}
 
+	public function paramInference(foo)
+	{
+
+	}
+
+	private function noBraces(i:Int) return switch(i) { 
+		case 0: "0";
+		case 1: "1";
+		default: "?";
+	}
+
 }
 

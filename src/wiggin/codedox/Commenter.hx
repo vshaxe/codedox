@@ -185,7 +185,6 @@ class Commenter
 		sb.add("\n");
 		
 		sb.add(strIndent);
-		sb.add(" ");
 		sb.add(settings.strCommentPrefix);
 		sb.add(settings.strCommentDescription);
 		sb.add("\n");
@@ -195,7 +194,6 @@ class Commenter
 			for(item in arrParams)
 			{
 				sb.add(strIndent);
-				sb.add(" ");
 				sb.add(settings.strCommentPrefix);
 
 				var mapP = ["name" => item.name, "type" => item.type];
@@ -210,7 +208,6 @@ class Commenter
 		if(StringUtil.hasChars(strReturnType) && strReturnType != "Void" && StringUtil.hasChars(settings.strReturnFormat))
 		{
 			sb.add(strIndent);
-			sb.add(" ");
 			sb.add(settings.strCommentPrefix);
 
 			var mapR = ["type" => strReturnType];
@@ -221,7 +218,6 @@ class Commenter
 			sb.add("\n");
 		}
 		sb.add(strIndent);
-		sb.add(" ");
 		sb.add(settings.strCommentEnd);
 		sb.add("\n");
 		return sb.toString();
