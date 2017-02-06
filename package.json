@@ -2,7 +2,7 @@
     "name": "codedox",
     "displayname": "Codedox for Haxe",
     "description": "Inserts JSDoc-style comments including @param and @return tags, plus customizable file header license and copyright comments.",
-    "version": "1.2.3",
+    "version": "1.2.4",
     "publisher": "wiggin77",
     "license": "(MIT) View license in LICENSE.md",
     "engines": {
@@ -101,7 +101,7 @@
                         "commentprefix": {
                             "description": "Per-line comment prefix",
                             "type": "string",
-                            "default": "*  "
+                            "default": " *  "
                         },
                         "commentbegin": {
                             "description": "Start of function comment",
@@ -111,7 +111,7 @@
                         "commentend": {
                             "description": "End of function comment",
                             "type": "string",
-                            "default": "*/"
+                            "default": " */"
                         },
                         "commentdescription": {
                             "description": "Initial text added to comment description",

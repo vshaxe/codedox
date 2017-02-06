@@ -1,5 +1,10 @@
 # Codedox change log
 
+## 1.2.4
+
+* Fix [issue 10](https://github.com/wiggin77/codedox/issues/10) "commentend" & "commentprefix" have hardcoded space.
+* Fix [issue 8](https://github.com/wiggin77/codedox/issues/8) Params using type inference not handled properly.
+
 ## 1.2.3
 
 * Fix "window.activeTextEditor can be null" via [Gamma11 PR](https://github.com/wiggin77/codedox/pull/5)
