@@ -21,6 +21,8 @@
  */
 package wiggin.util;
 
+import wiggin.util.StringUtil;
+
 class RegExUtil
 {
 	/**
@@ -34,6 +36,28 @@ class RegExUtil
 	{
 		var r = ~/([\\*+\[\](){}\$.?\^|])/g;
 		return r.replace(strPattern, #if java "\\\\$1" #else "\\$1" #end);
+	}
+
+	/**
+	 *  Escapes all characters in `strChars` such that they can be safely used in
+	 *  character ranges.
+	 *  @param strChars - the character sequence to escape. Cannot be null.
+	 *  @return String - the escaped sequence
+	 */
+	public static function escapeRegexChars(strChars:String) : String
+	{
+		var sb = new StringBuf();
+		var it = new StringIterator(strChars);
+		var arrMeta = ["^", "[", "." , "$", "{", "*", "(", "\\", "+", ")", "|", "?", "<", ">"];
+		for(ch in it)
+		{
+			if(StringUtil.contains(ch, arrMeta))
+			{
+				sb.add("\\");
+			}
+			sb.add(ch);
+		}
+		return sb.toString();
 	}
 
 }

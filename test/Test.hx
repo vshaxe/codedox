@@ -1,6 +1,7 @@
-
 package ;
 
+/** 
+**/
 class Test 
 {
 	private var m_strToken:String;  

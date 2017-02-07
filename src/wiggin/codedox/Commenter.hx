@@ -141,7 +141,7 @@ class Commenter
 				// beginning of the next non-blank line.
 				var lineCheck:TextLine = ParseUtil.findLine(doc, new Position(posStart.line + 1, 0), Direction.Forward, ~/[^\s]+/);
 				var strIndent = (lineCheck != null) ? ParseUtil.getIndent(doc, lineCheck.range.start) : "";
-				strComment = strIndent + settings.strCommentBegin + "  " + settings.strCommentEnd + "\n";
+				strComment = strIndent + settings.strCommentBegin + " " + settings.strCommentEnd + "\n";
 			}
 		}
 		return strComment;

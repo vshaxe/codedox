@@ -27,6 +27,7 @@ import vscode.ExtensionContext;
 import vscode.TextEditor;
 import vscode.TextEditorEdit;
 import vscode.TextDocumentChangeEvent;
+import vscode.TextDocumentContentChangeEvent;
 import vscode.TextLine;
 import vscode.Selection;
 import vscode.Position;
@@ -34,12 +35,16 @@ import wiggin.codedox.FileHeader;
 import wiggin.codedox.Commenter;
 import wiggin.util.StringUtil;
 import wiggin.util.ParseUtil;
+import wiggin.util.RegExUtil;
 using StringTools;
+using Lambda;
 
-typedef Settings = {autoInsert:Bool, autoInsertHeader:Bool, strParamFormat:String, strReturnFormat:String, 
+typedef Settings = {autoPrefixOnEnter:Bool, autoInsert:Bool, autoInsertHeader:Bool, strParamFormat:String, strReturnFormat:String, 
 					strCommentBegin:String, strCommentEnd:String, strCommentPrefix:String, strCommentDescription:String, 
 					strCommentTrigger:String, strAutoClosingClose:String, strAutoClosingCloseAlt:String, strHeaderBegin:String, 
 					strHeaderEnd:String, strHeaderPrefix:String, strHeaderTrigger:String, allowOptionalArgs:Bool }
+
+typedef CheckAction = TextDocumentContentChangeEvent->Settings->TextEditor->Bool;
 
 /**
  *  Main extension class.
@@ -96,25 +101,31 @@ class CodeDox
 		registerTextEditorCommand(context, CMD_INSERT_COMMENT, insertComment);
 
 		// Add onEnter rules.
-		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(EXTENSION_NAME);
-		var bAutoPrefixOnEnter = config.get("autoPrefixOnEnter", true);
-		var strCommentPrefix = config.get("commentprefix", "*  ");
+		var settings = CodeDox.getSettings();
+		var bAutoPrefixOnEnter = settings.autoPrefixOnEnter;
+		var strCommentPrefix = settings.strCommentPrefix;
 		if(bAutoPrefixOnEnter)
 		{
+			var esc = RegExUtil.escapeRegexChars;
+			var strCBeginEsc = esc(settings.strCommentBegin);
+			var strCTermEsc = esc(settings.strCommentBegin.substr(0,1));
+			var strCEndEsc = esc(settings.strCommentEnd);
+
 			Vscode.languages.setLanguageConfiguration("haxe", 
 			{
 				// TODO: modify these regex to use settings.strCommentBegin, settings.strCommentEnd, etc
 				onEnterRules: [
 					{				
 						// e.g. /** | */
-						beforeText: new js.RegExp("^\\s*\\/\\*\\*(?!\\/)([^\\*]|\\*(?!\\/))*$"),
-						afterText: new js.RegExp("^\\s*\\*\\/$"),
-						action: { indentAction: vscode.IndentAction.IndentOutdent, appendText: " " + strCommentPrefix }
+						beforeText: new js.RegExp("^\\s*" + strCBeginEsc + "(?!\\/)([^\\*]|\\*(?!\\/))*$"),
+						afterText: new js.RegExp("^\\s*" + strCEndEsc + "$"),
+						action: { indentAction: vscode.IndentAction.IndentOutdent, appendText: strCommentPrefix }
 					},
+#if blap
 					{
 						// e.g. /** ...|
 						beforeText: new js.RegExp("^\\s*\\/\\*\\*(?!\\/)([^\\*]|\\*(?!\\/))*$"),
-						action: { indentAction: vscode.IndentAction.None, appendText: " " + strCommentPrefix }
+						action: { indentAction: vscode.IndentAction.None, appendText: strCommentPrefix }
 					},
 					{
 						// e.g.  * ...|
@@ -131,6 +142,7 @@ class CodeDox
 						beforeText: new js.RegExp("^(\\t|(\\ \\ ))*\\ \\*[^/]*\\*\\/\\s*$"),
 						action: { indentAction: vscode.IndentAction.None, removeText: 1 }
 					}
+#end					
 				]
 			});
 		}
@@ -266,63 +278,125 @@ class CodeDox
 			}
 
 			var change = evt.contentChanges[0];
-			var strChangeText = change.text;
-
-			if(StringUtil.hasChars(strChangeText))
+			if(StringUtil.hasChars(change.text))
 			{
-				if(m_commenter != null && m_commenter.isInsertPending)
-				{
-					// A comment insert was just performed and we need to put the cursor in the right place, and possibly
-					// select a comment decription so the user can just start typing to overwrite it.
-					m_commenter.isInsertPending = false;
-					if(strChangeText.indexOf(settings.strCommentDescription) != -1)
-					{
-						var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentDescription);
-						if(ft != null)
-						{
-							editor.selection = new Selection(ft.posEnd, ft.posStart);
-						}
-					}
-					else if(strChangeText.trim() == settings.strCommentBegin + "  " + settings.strCommentEnd)
-					{
-						var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentBegin);
-						if(ft != null)
-						{
-							var p:Position = new Position(ft.posEnd.line, ft.posEnd.character + 1);
-							editor.selection = new Selection(p, p);
-						}
-					}
-				}
-				else if(settings.autoInsertHeader && strChangeText == settings.strHeaderTrigger && 
-				        doc.offsetAt(change.range.end) == 1 && change.range.isEmpty)
-				{
-					// A header comment trigger was typed at the top of file. 
-					var line = doc.lineAt(0);
-					if(line.text == settings.strHeaderBegin)
-					{
-						doHeaderInsert(line, editor);
-					}  
-				}
-				else if(settings.autoInsert && strChangeText == settings.strCommentTrigger || 
-				        strChangeText == settings.strCommentTrigger + settings.strAutoClosingClose ||
-						strChangeText == settings.strCommentTrigger + settings.strAutoClosingCloseAlt)
-				{
-					// A function comment trigger was typed.
-					var line = doc.lineAt(change.range.start.line);
-					var strCheck = StringUtil.trim(line.text);
-					if(strCheck == settings.strCommentBegin || 
-					   strCheck == settings.strCommentBegin + settings.strAutoClosingClose ||
-					   strCheck == settings.strCommentBegin + settings.strAutoClosingCloseAlt)
-					{
-						doCommentInsert(line, editor);
-					}
-				}
+				var arr:Array<CheckAction> = [checkInsertPending, checkInsertHeader, checkInsertComment];
+				arr.foreach(function(fn) {return !fn(change, settings, editor);});
 			}
 		}
 		catch(e:Dynamic)
 		{
 			handleError("", e, haxe.CallStack.exceptionStack());
 		}
+	}
+
+	/**
+	 *  Checks if the `TextDocumentContentChangeEvent` requires "insert-pending" handling, meaning an insert is pending
+	 *  and we need to reposition the cursor.
+	 *  
+	 *  @param change - the `TextDocumentContentChangeEvent` 
+	 *  @param settings - the current `Settings` object 
+	 *  @param editor - the current `TextEditor` object
+	 *  @return Bool - true if the event was processed
+	 */
+	private function checkInsertPending(change:TextDocumentContentChangeEvent, settings:Settings, editor:TextEditor) : Bool
+	{
+		var bRet = false;
+		var strChangeText = change.text;
+		var doc = editor.document;
+
+		if(m_commenter != null && m_commenter.isInsertPending && strChangeText != null)
+		{
+			bRet = true;
+
+			// A comment insert was just performed and we need to put the cursor in the right place, and possibly
+			// select a comment description so the user can just start typing to overwrite it.
+			m_commenter.isInsertPending = false;
+			if(strChangeText.indexOf(settings.strCommentDescription) != -1)
+			{
+				var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentDescription);
+				if(ft != null)
+				{
+					editor.selection = new Selection(ft.posEnd, ft.posStart);
+				}
+			}
+			else if(strChangeText.trim() == settings.strCommentBegin + " " + settings.strCommentEnd)
+			{
+				var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentBegin);
+				if(ft != null)
+				{
+					var p:Position = new Position(ft.posEnd.line, ft.posEnd.character + 1);
+					editor.selection = new Selection(p, p);
+				}
+			}
+		}
+		CodeDox.log("checkInsertPending: " + bRet);
+		return bRet;
+	}
+
+	/**
+	 *  Checks if the `TextDocumentContentChangeEvent` should trigger a header insert.
+	 *  
+	 *  @param change - the `TextDocumentContentChangeEvent` 
+	 *  @param settings - the current `Settings` object 
+	 *  @param editor - the current `TextEditor` object
+	 *  @return Bool - true if the event was processed
+	 */
+	private function checkInsertHeader(change:TextDocumentContentChangeEvent, settings:Settings, editor:TextEditor) : Bool
+	{
+		var bRet = false;
+
+		if(settings.autoInsertHeader && 
+		   StringUtil.startsWith(change.text, settings.strHeaderTrigger) && 
+		   change.range.end.line == 0 && 
+		   change.range.isEmpty)
+		{
+			bRet = true;
+
+			// A header comment trigger was typed at the top of file. 
+			var line = editor.document.lineAt(0);
+			var strLine = line.text;
+			if(strLine == settings.strHeaderBegin || strLine == settings.strHeaderBegin + settings.strHeaderEnd)
+			{
+				doHeaderInsert(line, editor);
+			}  
+		}
+		CodeDox.log("checkInsertHeader: " + bRet);
+		return bRet;
+	}
+
+	/**
+	 *  Checks if the `TextDocumentContentChangeEvent` should trigger a comment insert.  This could be
+	 *  a function or type comment.
+	 *  
+	 *  @param change - the `TextDocumentContentChangeEvent` 
+	 *  @param settings - the current `Settings` object 
+	 *  @param editor - the current `TextEditor` object
+	 *  @return Bool - true if the event was processed
+	 */
+	private function checkInsertComment(change:TextDocumentContentChangeEvent, settings:Settings, editor:TextEditor) : Bool
+	{
+		var bRet = false;
+		var strChangeText = change.text;
+
+		if(settings.autoInsert && strChangeText == settings.strCommentTrigger || 
+		   strChangeText == settings.strCommentTrigger + settings.strAutoClosingClose ||
+		   strChangeText == settings.strCommentTrigger + settings.strAutoClosingCloseAlt)
+		{
+			bRet = true;
+
+			// A function comment trigger was typed.
+			var line = editor.document.lineAt(change.range.start.line);
+			var strCheck = StringUtil.trim(line.text);
+			if(strCheck == settings.strCommentBegin || 
+				strCheck == settings.strCommentBegin + settings.strAutoClosingClose ||
+				strCheck == settings.strCommentBegin + settings.strAutoClosingCloseAlt)
+			{
+				doCommentInsert(line, editor);
+			}
+		}
+		CodeDox.log("checkInsertComment: " + bRet);
+		return bRet;
 	}
 
 	/**
@@ -432,6 +506,7 @@ class CodeDox
 			var strAutoCloseAlt = getAutoClosingClose(strCommentBegin, true);
 
 			s_settings = {
+				autoPrefixOnEnter: config.get("autoPrefixOnEnter", true),
 				autoInsert: config.get("autoInsert", true),
 				autoInsertHeader: config.get("autoInsertHeader", true),
 				strParamFormat: config.get("paramFormat", "@param ${name} - "),

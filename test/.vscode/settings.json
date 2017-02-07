@@ -16,6 +16,14 @@
 	// Codedox settings
 	"codedox": {
 		"paramFormat": "@param {${type}} ${name} - ",
+
+		"commentbegin": "/**",
+		"commentprefix": "    ",
+		"commentend": "**/",
+		"headerbegin": "/**",
+		"headerprefix": "    ",
+		"headerend": "**/",
+
 		"fileheader": {
 			"params": {
 				"haxe": {
