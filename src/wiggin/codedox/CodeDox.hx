@@ -38,8 +38,8 @@ using StringTools;
 
 typedef Settings = {autoInsert:Bool, autoInsertHeader:Bool, strParamFormat:String, strReturnFormat:String, 
 					strCommentBegin:String, strCommentEnd:String, strCommentPrefix:String, strCommentDescription:String, 
-					strCommentTrigger:String, strAutoClosingClose:String, strAutoClosingCloseAlt:String, strHeaderBegin:String, 
-					strHeaderEnd:String, strHeaderPrefix:String, strHeaderTrigger:String, allowOptionalArgs:Bool }
+					strCommentTrigger:String, strAutoClosingClose:String, strAutoClosingCloseAlt:String, strAutoClosingCloseJS:String,
+					strHeaderBegin:String, strHeaderEnd:String, strHeaderPrefix:String, strHeaderTrigger:String, allowOptionalArgs:Bool }
 
 /**
  *  Main extension class.
@@ -254,7 +254,7 @@ class CodeDox
 			// Vast majority of keystrokes will not result in an insert, so try to exit fast.
 			var settings:Settings = getSettings();
 			var doc = evt.document;
-			if((!settings.autoInsert && !settings.autoInsertHeader) || !isLangaugeSupported(doc.languageId) || evt.contentChanges.length != 1)
+			if((!settings.autoInsert && !settings.autoInsertHeader) || !isLangaugeSupported(doc.languageId, doc.fileName) || evt.contentChanges.length != 1)
 			{
 				return;
 			}
@@ -305,6 +305,7 @@ class CodeDox
 				}
 				else if(settings.autoInsert && strChangeText == settings.strCommentTrigger || 
 				        strChangeText == settings.strCommentTrigger + settings.strAutoClosingClose ||
+						strChangeText == settings.strCommentTrigger + settings.strAutoClosingCloseJS ||
 						strChangeText == settings.strCommentTrigger + settings.strAutoClosingCloseAlt)
 				{
 					// A function comment trigger was typed.
@@ -312,6 +313,7 @@ class CodeDox
 					var strCheck = StringUtil.trim(line.text);
 					if(strCheck == settings.strCommentBegin || 
 					   strCheck == settings.strCommentBegin + settings.strAutoClosingClose ||
+					   strCheck == settings.strCommentBegin + settings.strAutoClosingCloseJS ||
 					   strCheck == settings.strCommentBegin + settings.strAutoClosingCloseAlt)
 					{
 						doCommentInsert(line, editor);
@@ -406,11 +408,17 @@ class CodeDox
 	 *  @param strLangId - the language id to check
 	 *  @return Bool
 	 */
-	private inline function isLangaugeSupported(strLangId:String) : Bool
+	private inline function isLangaugeSupported(strLangId:String, strFileName:String) : Bool
 	{
 		return switch(strLangId)
 		{
 			case "haxe": true;
+			// JS
+			case "javascript": true;
+			// VUE
+			case "html": {
+				return (strFileName.toLowerCase().indexOf(".vue") > 0);
+			}
 			// TODO:  add additional languages here
 			default: false;
 		}
@@ -430,6 +438,7 @@ class CodeDox
 			var strHeaderBegin = config.get("headerbegin", "/*");
 			var strAutoClose = getAutoClosingClose(strCommentBegin, false);
 			var strAutoCloseAlt = getAutoClosingClose(strCommentBegin, true);
+			var strAutoCloseJS = " */";
 
 			s_settings = {
 				autoInsert: config.get("autoInsert", true),
@@ -443,6 +452,7 @@ class CodeDox
 				strCommentTrigger: StringUtil.right(strCommentBegin, 1),
 				strAutoClosingClose: (strAutoClose != null) ? strAutoClose : "",
 				strAutoClosingCloseAlt: (strAutoCloseAlt != null) ? strAutoCloseAlt : "",
+				strAutoClosingCloseJS: (strAutoCloseJS != null) ? strAutoCloseJS : "",
 				strHeaderBegin: config.get("headerbegin", "/*"),
 				strHeaderEnd: config.get("headerend", "*/"),
 				strHeaderPrefix: config.get("headerprefix", " *"),

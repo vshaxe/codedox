@@ -31,6 +31,8 @@
     },
     "activationEvents": [
         "onLanguage:haxe",
+		"onLanguage:js",
+		"onLanguage:html",
         "onCommand:codedox.setup",
         "onCommand:codedox.fileheader.insert",
         "onCommand:codedox.comment.insert"

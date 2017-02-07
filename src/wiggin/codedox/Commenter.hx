@@ -155,16 +155,24 @@ class Commenter
 	 */
 	private static function getFunctionRegex(strLangaugeId:String) : EReg
 	{
-		var regex:EReg;
+		var haxe_regex:EReg;
+		var js_regex:EReg;
+
+		haxe_regex = ~/(?:function\s+\w+\s*)(?:<[\s\S]+>\s*)*\(([^)]*)\)(?:(?:(?:\s*:\s*)*(\w*[^{;]*)))/;
+		js_regex = ~/(?:function\s*\w*\s*)(?:<[\s\S]+>\s*)*\(([^)]*)\)(?:(?:(?:\s*:\s*)*(\w*[^{;]*)))/;
+
 		switch(strLangaugeId)
 		{
 			case "haxe":
-				regex = ~/(?:function\s+\w+\s*)(?:<[\s\S]+>\s*)*\(([^)]*)\)(?:(?:(?:\s*:\s*)*(\w*[^{;]*)))/;
+				return haxe_regex;
+			case "javascript":
+				return js_regex;
+			case "html":
+				return js_regex;
 			// TODO: other languages here.
 			default:
-				regex = ~/(?:function\s+\w+\s*)(?:<[\s\S]+>\s*)*\(([^)]*)\)(?:(?:(?:\s*:\s*)*(\w*[^{;]*)))/;
+				return haxe_regex;
 		}	
-		return regex;
 	}
 
 	/**
