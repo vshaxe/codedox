@@ -102,7 +102,7 @@ class Commenter
 
 			// Make sure this really is the start of a method (as best we can without
 			// access to document structure).
-			var settings = CodeDox.getSettings();
+			var settings = Settings.fetch(doc.languageId);
 			var strPreamble = strText.substr(0, iPosMatch + 1);
 			if(!StringUtil.contains(strPreamble, [settings.strCommentBegin, settings.strCommentEnd, "{", "}", ";"]))
 			{
@@ -133,7 +133,7 @@ class Commenter
 				CodeDox.log(sb.toString());
 				#end
 
-				strComment = composeComment(strIndent, arrParams, strReturnType);
+				strComment = composeComment(strIndent, arrParams, strReturnType, settings);
 			}
 			else
 			{
@@ -173,12 +173,11 @@ class Commenter
 	 *  @param strIndent - string used to indent each comment line
 	 *  @param arrParams - array of `Param` structs
 	 *  @param strReturnType - the return type 
+	 *  @param settings - the `Settings` object
 	 *  @return String - the new comment block 
 	 */
-	private static function composeComment(strIndent:String, ?arrParams:Array<Param>, ?strReturnType:String) : String
+	private static function composeComment(strIndent:String, ?arrParams:Array<Param>, ?strReturnType:String, settings:Settings) : String
 	{
-		var settings = CodeDox.getSettings();
-
 		var sb = new StringBuf();
 		sb.add(strIndent);
 		sb.add(settings.strCommentBegin);
@@ -251,7 +250,7 @@ class Commenter
 
 		strParams = StringUtil.toEmptyIfNull(strParams);
 		var arrParams:Array<Param> = [];
-		var bAllowOptional = CodeDox.getSettings().allowOptionalArgs;
+		var bAllowOptional = Settings.fetch(strLanguageId).allowOptionalArgs;
 
 		var arr = ParseUtil.splitByCommas(strParams);
 		for(item in arr)

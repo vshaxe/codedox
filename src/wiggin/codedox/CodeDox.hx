@@ -22,7 +22,6 @@
 package wiggin.codedox;
 
 import js.Promise;
-import vscode.WorkspaceConfiguration;
 import vscode.ExtensionContext;
 import vscode.TextEditor;
 import vscode.TextEditorEdit;
@@ -38,11 +37,6 @@ import wiggin.util.ParseUtil;
 import wiggin.util.RegExUtil;
 using StringTools;
 using Lambda;
-
-typedef Settings = {autoPrefixOnEnter:Bool, autoInsert:Bool, autoInsertHeader:Bool, strParamFormat:String, strReturnFormat:String, 
-					strCommentBegin:String, strCommentEnd:String, strCommentPrefix:String, strCommentDescription:String, 
-					strCommentTrigger:String, strAutoClosingClose:String, strAutoClosingCloseAlt:String, strHeaderBegin:String, 
-					strHeaderEnd:String, strHeaderPrefix:String, strHeaderTrigger:String, allowOptionalArgs:Bool }
 
 typedef CheckAction = TextDocumentContentChangeEvent->Settings->TextEditor->Bool;
 
@@ -72,9 +66,6 @@ class CodeDox
 	/** Command name for insert comment */
 	public static inline var CMD_INSERT_COMMENT = FEATURE_COMMENT + ".insert";
 
-	/** Settings, lazy fetched */
-	private static var s_settings:Settings = null;
-
 	/** Path to extension installation. **/
 	private static var s_extPath:String = null;
 
@@ -93,7 +84,7 @@ class CodeDox
 		m_commenter = null;
 		s_extPath = context.extensionPath;
 
-		context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void){s_settings=null;}));
+		context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void){Settings.clearCache();}));
 		context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument(onTextChange));
 
 		registerCommand(context, CMD_SETUP, doSetup);
@@ -101,7 +92,7 @@ class CodeDox
 		registerTextEditorCommand(context, CMD_INSERT_COMMENT, insertComment);
 
 		// Add onEnter rules.
-		var settings = CodeDox.getSettings();
+		var settings = Settings.fetch(getCurrentLanguageId());
 		var bAutoPrefixOnEnter = settings.autoPrefixOnEnter;
 		var strCommentPrefix = settings.strCommentPrefix;
 		if(bAutoPrefixOnEnter)
@@ -264,15 +255,20 @@ class CodeDox
 		try
 		{
 			// Vast majority of keystrokes will not result in an insert, so try to exit fast.
-			var settings:Settings = getSettings();
 			var doc = evt.document;
-			if((!settings.autoInsert && !settings.autoInsertHeader) || !isLangaugeSupported(doc.languageId) || evt.contentChanges.length != 1)
+			if(!isLanguageSupported(doc.languageId) || evt.contentChanges.length != 1)
 			{
 				return;
 			}
 
 			var editor = Vscode.window.activeTextEditor;
 			if(editor == null || editor.document != doc)
+			{
+				return;
+			}
+
+			var settings:Settings = Settings.fetch(doc.languageId);
+			if(!settings.autoInsert && !settings.autoInsertHeader)
 			{
 				return;
 			}
@@ -480,7 +476,7 @@ class CodeDox
 	 *  @param strLangId - the language id to check
 	 *  @return Bool
 	 */
-	private inline function isLangaugeSupported(strLangId:String) : Bool
+	private inline function isLanguageSupported(strLangId:String) : Bool
 	{
 		return switch(strLangId)
 		{
@@ -491,41 +487,19 @@ class CodeDox
 	}
 
 	/**
-	 *  Lazy fetches extension settings from config, caching the result so we don't have
-	 *  to look this up each keystroke.
-	 *  @return `Settings`
+	 *  Returns the language id for the current editor/document, or null if no 
+	 *  editor/document is present.
+	 *  @return String or null
 	 */
-	public static function getSettings() : Settings
+	public static function getCurrentLanguageId() : Null<String>
 	{
-		if(s_settings == null)
+		var strLang:Null<String> = null;
+		var editor = Vscode.window.activeTextEditor;
+		if(editor != null && editor.document != null)
 		{
-			var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(EXTENSION_NAME);
-			var strCommentBegin = config.get("commentbegin", "/**");
-			var strHeaderBegin = config.get("headerbegin", "/*");
-			var strAutoClose = getAutoClosingClose(strCommentBegin, false);
-			var strAutoCloseAlt = getAutoClosingClose(strCommentBegin, true);
-
-			s_settings = {
-				autoPrefixOnEnter: config.get("autoPrefixOnEnter", true),
-				autoInsert: config.get("autoInsert", true),
-				autoInsertHeader: config.get("autoInsertHeader", true),
-				strParamFormat: config.get("paramFormat", "@param ${name} - "),
-				strReturnFormat: config.get("returnFormat", "@return ${type}"),
-				strCommentBegin: strCommentBegin,
-				strCommentEnd: config.get("commentend", " */"),
-				strCommentPrefix: config.get("commentprefix", " *  "),
-				strCommentDescription: config.get("commentdescription", "[Description]"),
-				strCommentTrigger: StringUtil.right(strCommentBegin, 1),
-				strAutoClosingClose: (strAutoClose != null) ? strAutoClose : "",
-				strAutoClosingCloseAlt: (strAutoCloseAlt != null) ? strAutoCloseAlt : "",
-				strHeaderBegin: config.get("headerbegin", "/*"),
-				strHeaderEnd: config.get("headerend", "*/"),
-				strHeaderPrefix: config.get("headerprefix", " *"),
-				strHeaderTrigger: StringUtil.right(strHeaderBegin, 1),
-				allowOptionalArgs: config.get("allowOptionalArgs", false)
-			};
+			strLang = editor.document.languageId;
 		}
-		return s_settings;
+		return strLang;
 	}
 
 	/**
@@ -537,28 +511,5 @@ class CodeDox
 		return s_extPath;
 	}
 
-	/**
-	 *  Returns the autoclosing close string for the specified opening string.
-	 *  e.g. "\**" is usually closed with "*\".
-	 *  
-	 *  @param strAutoClosingOpen - the opening string of an autoclosing pair
-	 *  @param bAlt - true if the alternative close pair is to be returned
-	 *  @return String or null
-	 */
-	private static function getAutoClosingClose(strAutoClosingOpen:String, ?bAlt = false) : Null<String>
-	{
-		// Dammit. Vscode won't let me lookup the LanguageConfiguration settings.
-		// Maybe this will be added in the future: https://github.com/Microsoft/vscode/issues/2871
-
-		// We'll have to hack something for now...
-		return switch(strAutoClosingOpen)
-		{
-			// For some reason the Haxe extension configures vscode to autoclose with double asterisk.
-			case "/**": (bAlt) ? "*/" : "**/";  
-
-			// Just reverse the open until we can read the real value??
-			default: StringUtil.reverse(strAutoClosingOpen);  
-		}
-	}
 
 } // end of CodeDox class
