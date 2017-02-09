@@ -2,6 +2,7 @@
 
 ## 1.2.4
 
+* Fix [issue 16](https://github.com/wiggin77/codedox/issues/16) support newlines in commentdescription, paramFormat, returnFormat
 * New config option `alwaysMultiline:true`. If true then all comments are multiline, otherwise non-functions (types) are single line.
 * OnEnter rules dynamically generated for custom configs
 * Fix [issue 12](https://github.com/wiggin77/codedox/issues/12) Spaces added for non-function docs

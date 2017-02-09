@@ -190,56 +190,86 @@ class Commenter
 	 */
 	private static function composeComment(info:ComposeInfo, settings:Settings) : String
 	{
+		var strIndent = info.strIndent;
+		var strPrefix = settings.strCommentPrefix;
+
 		var sb = new StringBuf();
-		sb.add(info.strIndent);
+		sb.add(strIndent);
 		sb.add(settings.strCommentBegin);
 		sb.add("\n");
 		
-		sb.add(info.strIndent);
-		sb.add(settings.strCommentPrefix);
 		if(info.bIncludeDescription && StringUtil.hasChars(settings.strCommentDescription))
 		{
-			sb.add(settings.strCommentDescription);
+			var strDescription = settings.strCommentDescription;
+			if(StringUtil.onlyWhitespace(strDescription))
+			{
+				strDescription = settings.strCommentToken + strDescription;
+			}
+			composeCommentLines(sb, strDescription, strIndent, strPrefix);
 		}
 		else
 		{
-			sb.add(settings.strCommentToken);
+			composeCommentLines(sb, settings.strCommentToken, strIndent, strPrefix);
 		}
-		sb.add("\n");
 
 		if(info.params != null && StringUtil.hasChars(settings.strParamFormat))
 		{		
 			for(item in info.params)
 			{
-				sb.add(info.strIndent);
-				sb.add(settings.strCommentPrefix);
-
 				var mapP = ["name" => item.name, "type" => item.type];
 				ParamUtil.addDefaultParams(mapP);
 				var strP = ParamUtil.applyParams(settings.strParamFormat, mapP);
-				sb.add(strP);
-				
-				sb.add("\n");
+
+				composeCommentLines(sb, strP, strIndent, strPrefix);
 			}
 		}
 
 		if(StringUtil.hasChars(info.retType) && info.retType != "Void" && StringUtil.hasChars(settings.strReturnFormat))
 		{
-			sb.add(info.strIndent);
-			sb.add(settings.strCommentPrefix);
-
 			var mapR = ["type" => info.retType];
 			ParamUtil.addDefaultParams(mapR);
 			var strR = ParamUtil.applyParams(settings.strReturnFormat, mapR);
-			sb.add(strR);
-						
-			sb.add("\n");
+
+			composeCommentLines(sb, strR, strIndent, strPrefix);
 		}
 		sb.add(info.strIndent);
 		sb.add(settings.strCommentEnd);
 		sb.add("\n");
 		return sb.toString();
 	} 
+
+	/**
+	 *  Composes one or more comment lines.  If the `strFragment` contains newlines then multiple lines are generated.
+	 *  
+	 *  @param sb - the `StringBuf` to populate
+	 *  @param strFragment - the comment fragment to output
+	 *  @param strIndent - the indent for each line generated
+	 *  @param strPrefix - the commentprefix for each line generated
+	 */
+	private static function composeCommentLines(sb:StringBuf, strFragment:String, strIndent:String, strPrefix:String) : Void
+	{
+		// Empty string behaves differently on different targets for String.split, 
+		// so let's just special case that with a deterministic result.
+		if(!StringUtil.hasChars(strFragment))
+		{
+			sb.add(strIndent);
+			sb.add(strPrefix);
+			sb.add("\n");
+			return;			
+		}
+
+		var arr = strFragment.split("\n");
+		for(str in arr)
+		{
+			sb.add(strIndent);
+			sb.add(strPrefix);
+			if(StringUtil.hasChars(str))
+			{
+				sb.add(str);
+			}
+			sb.add("\n");
+		}
+	}
 
 	/**
 	 *  Parses the method parameters and returns an array of `Param` objects.

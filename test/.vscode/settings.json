@@ -15,7 +15,9 @@
     ],
 	// Codedox settings
 	"codedox": {
-		"paramFormat": "@param {${type}} ${name} - ",
+		//"paramFormat": "\n@param {${type}} ${name} - \n",
+		//"returnFormat": "\n@return ${type}\n",
+		//"alwaysMultiline": false,
 
 		"commentbegin": "/**",
 		"commentprefix": "    ",
@@ -23,7 +25,7 @@
 		"headerbegin": "/**",
 		"headerprefix": "    ",
 		"headerend": "**/",
-		//"commentdescription": "",
+		"commentdescription": "[Description]\n",
 
 		"fileheader": {
 			"params": {

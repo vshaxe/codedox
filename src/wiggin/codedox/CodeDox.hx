@@ -280,10 +280,13 @@ class CodeDox
 			// A comment insert was just performed and we need to put the cursor in the right place, and possibly
 			// select a comment description so the user can just start typing to overwrite it.
 			m_commenter.isInsertPending = false;
-			if(StringUtil.hasChars(settings.strCommentDescription) && strChangeText.indexOf(settings.strCommentDescription) != -1)
+			var strDescription = StringUtil.trim(settings.strCommentDescription);
+			var i = strDescription.indexOf("\n");
+			strDescription = (i != -1) ? strDescription.substring(0, i) : strDescription;
+			if(!StringUtil.onlyWhitespace(strDescription) && strChangeText.indexOf(strDescription) != -1)
 			{
 				// Select the "Description" text.
-				var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentDescription);
+				var ft:FoundText = ParseUtil.findText(doc, change.range.start, strDescription);
 				if(ft != null)
 				{
 					editor.selection = new Selection(ft.posEnd, ft.posStart);

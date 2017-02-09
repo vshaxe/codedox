@@ -38,6 +38,16 @@ class StringUtil
 	}
 	
 	/**
+	 *  Returns true if the specified string is empty, null, or only contains whitespace.
+	 *  @param str - the string to check for non-whitespace characters.
+	 *  @return Bool
+	 */
+	public inline static function onlyWhitespace(str:String) : Bool
+	{
+		return !hasChars(trim(str));
+	}
+
+	/**
 	* Removes all whitespace from a string. Any spaces, tabs, newlines will be
 	* removed.
 	*
