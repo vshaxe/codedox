@@ -31,8 +31,9 @@ import wiggin.util.ParseUtil;
 import wiggin.util.ParseUtil.Direction;
 import wiggin.util.ParamUtil;
 
-typedef Param = {name:String, type:String}
-typedef FunctionInfo = {params:Array<Param>, retType:String, strIndent:String}
+private typedef Param = {name:String, type:String}
+private typedef ComposeInfo = {params:Null<Array<Param>>, retType:Null<String>, 
+                               strIndent:String, bIncludeDescription:Bool}
 
 /**
  *  Implements command for inserting a code comment at cursor location.
@@ -91,6 +92,8 @@ class Commenter
 		range = doc.validateRange(range);
 		var strText = doc.getText(range);
 
+		var settings = Settings.fetch(doc.languageId);
+
 		// Match the first method declaration. Group 1 will contain the
 		// parameters, group 2 will contain the return type.
 		var r = getFunctionRegex(doc.languageId);
@@ -102,7 +105,6 @@ class Commenter
 
 			// Make sure this really is the start of a method (as best we can without
 			// access to document structure).
-			var settings = Settings.fetch(doc.languageId);
 			var strPreamble = strText.substr(0, iPosMatch + 1);
 			if(!StringUtil.contains(strPreamble, [settings.strCommentBegin, settings.strCommentEnd, "{", "}", ";"]))
 			{
@@ -133,14 +135,28 @@ class Commenter
 				CodeDox.log(sb.toString());
 				#end
 
-				strComment = composeComment(strIndent, arrParams, strReturnType, settings);
+				var info:ComposeInfo = {params:arrParams, retType:strReturnType, strIndent:strIndent, bIncludeDescription:true};
+				strComment = composeComment(info, settings);
 			}
+		}
+
+		if(strComment == null)
+		{
+			// Didn't match a function definition. BUT, a comment was triggered, meaning the trigger was 
+			// typed on an otherwise empty line.  We're probably documenting a type (class, typedef, var).
+
+			// Figure out the indentation used by counting whitespace at the
+			// beginning of the next non-blank line.
+			var lineCheck:TextLine = ParseUtil.findLine(doc, new Position(posStart.line + 1, 0), Direction.Forward, ~/[^\s]+/);
+			var strIndent = (lineCheck != null) ? ParseUtil.getIndent(doc, lineCheck.range.start) : "";
+			
+			if(settings.alwaysMultiline)
+			{
+				var info:ComposeInfo = {params:null, retType:null, strIndent:strIndent, bIncludeDescription:false};
+				strComment = composeComment(info, settings);
+			}	
 			else
 			{
-				// Figure out the indentation used by counting whitespace at the
-				// beginning of the next non-blank line.
-				var lineCheck:TextLine = ParseUtil.findLine(doc, new Position(posStart.line + 1, 0), Direction.Forward, ~/[^\s]+/);
-				var strIndent = (lineCheck != null) ? ParseUtil.getIndent(doc, lineCheck.range.start) : "";
 				strComment = strIndent + settings.strCommentBegin + " " + settings.strCommentEnd + "\n";
 			}
 		}
@@ -155,44 +171,47 @@ class Commenter
 	 */
 	private static function getFunctionRegex(strLangaugeId:String) : EReg
 	{
-		var regex:EReg;
-		switch(strLangaugeId)
+		var haxe = ~/(?:function\s+\w+\s*)(?:<[\s\S]+>\s*)*\(([^)]*)\)(?:(?:(?:\s*:\s*)*(\w*[^{;]*)))/;
+
+		return switch(strLangaugeId)
 		{
-			case "haxe":
-				regex = ~/(?:function\s+\w+\s*)(?:<[\s\S]+>\s*)*\(([^)]*)\)(?:(?:(?:\s*:\s*)*(\w*[^{;]*)))/;
+			case "haxe": haxe;
 			// TODO: other languages here.
-			default:
-				regex = ~/(?:function\s+\w+\s*)(?:<[\s\S]+>\s*)*\(([^)]*)\)(?:(?:(?:\s*:\s*)*(\w*[^{;]*)))/;
+			default:  haxe;
 		}	
-		return regex;
 	}
 
 	/**
 	 *  Composes a comment block based on the specified indent and method parameters. 
 	 *
-	 *  @param strIndent - string used to indent each comment line
-	 *  @param arrParams - array of `Param` structs
-	 *  @param strReturnType - the return type 
+	 *  @param info - the `ComposeInfo` objecting containing params, return type, etc.
 	 *  @param settings - the `Settings` object
 	 *  @return String - the new comment block 
 	 */
-	private static function composeComment(strIndent:String, ?arrParams:Array<Param>, ?strReturnType:String, settings:Settings) : String
+	private static function composeComment(info:ComposeInfo, settings:Settings) : String
 	{
 		var sb = new StringBuf();
-		sb.add(strIndent);
+		sb.add(info.strIndent);
 		sb.add(settings.strCommentBegin);
 		sb.add("\n");
 		
-		sb.add(strIndent);
+		sb.add(info.strIndent);
 		sb.add(settings.strCommentPrefix);
-		sb.add(settings.strCommentDescription);
+		if(info.bIncludeDescription && StringUtil.hasChars(settings.strCommentDescription))
+		{
+			sb.add(settings.strCommentDescription);
+		}
+		else
+		{
+			sb.add(settings.strCommentToken);
+		}
 		sb.add("\n");
 
-		if(arrParams != null && StringUtil.hasChars(settings.strParamFormat))
+		if(info.params != null && StringUtil.hasChars(settings.strParamFormat))
 		{		
-			for(item in arrParams)
+			for(item in info.params)
 			{
-				sb.add(strIndent);
+				sb.add(info.strIndent);
 				sb.add(settings.strCommentPrefix);
 
 				var mapP = ["name" => item.name, "type" => item.type];
@@ -204,19 +223,19 @@ class Commenter
 			}
 		}
 
-		if(StringUtil.hasChars(strReturnType) && strReturnType != "Void" && StringUtil.hasChars(settings.strReturnFormat))
+		if(StringUtil.hasChars(info.retType) && info.retType != "Void" && StringUtil.hasChars(settings.strReturnFormat))
 		{
-			sb.add(strIndent);
+			sb.add(info.strIndent);
 			sb.add(settings.strCommentPrefix);
 
-			var mapR = ["type" => strReturnType];
+			var mapR = ["type" => info.retType];
 			ParamUtil.addDefaultParams(mapR);
 			var strR = ParamUtil.applyParams(settings.strReturnFormat, mapR);
 			sb.add(strR);
 						
 			sb.add("\n");
 		}
-		sb.add(strIndent);
+		sb.add(info.strIndent);
 		sb.add(settings.strCommentEnd);
 		sb.add("\n");
 		return sb.toString();

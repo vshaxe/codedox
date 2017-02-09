@@ -118,6 +118,11 @@
                             "type": "string",
                             "default": "[Description]"
                         },
+                        "alwaysMultiline": {
+                            "description": "If true then all comments are multiline, else non-functions are single line",
+                            "type": "boolean",
+                            "default": true
+                        },
                         "headerprefix": {
                             "description": "Per-line header prefix",
                             "type": "string",

@@ -23,6 +23,7 @@
 		"headerbegin": "/**",
 		"headerprefix": "    ",
 		"headerend": "**/",
+		//"commentdescription": "",
 
 		"fileheader": {
 			"params": {

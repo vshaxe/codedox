@@ -34,7 +34,6 @@ import wiggin.codedox.FileHeader;
 import wiggin.codedox.Commenter;
 import wiggin.util.StringUtil;
 import wiggin.util.ParseUtil;
-import wiggin.util.RegExUtil;
 using StringTools;
 using Lambda;
 
@@ -76,70 +75,6 @@ class CodeDox
 	private var m_commenter:Commenter;
 
 	/**
-	 *  Constructor
-	 */
-	public function new(context:ExtensionContext)
-	{
-		m_fileHeader = null;
-		m_commenter = null;
-		s_extPath = context.extensionPath;
-
-		context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void){Settings.clearCache();}));
-		context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument(onTextChange));
-
-		registerCommand(context, CMD_SETUP, doSetup);
-		registerTextEditorCommand(context, CMD_INSERT_FILE_HEADER, insertFileHeader);
-		registerTextEditorCommand(context, CMD_INSERT_COMMENT, insertComment);
-
-		// Add onEnter rules.
-		var settings = Settings.fetch(getCurrentLanguageId());
-		var bAutoPrefixOnEnter = settings.autoPrefixOnEnter;
-		var strCommentPrefix = settings.strCommentPrefix;
-		if(bAutoPrefixOnEnter)
-		{
-			var esc = RegExUtil.escapeRegexChars;
-			var strCBeginEsc = esc(settings.strCommentBegin);
-			var strCTermEsc = esc(settings.strCommentBegin.substr(0,1));
-			var strCEndEsc = esc(settings.strCommentEnd);
-
-			Vscode.languages.setLanguageConfiguration("haxe", 
-			{
-				// TODO: modify these regex to use settings.strCommentBegin, settings.strCommentEnd, etc
-				onEnterRules: [
-					{				
-						// e.g. /** | */
-						beforeText: new js.RegExp("^\\s*" + strCBeginEsc + "(?!\\/)([^\\*]|\\*(?!\\/))*$"),
-						afterText: new js.RegExp("^\\s*" + strCEndEsc + "$"),
-						action: { indentAction: vscode.IndentAction.IndentOutdent, appendText: strCommentPrefix }
-					},
-#if blap
-					{
-						// e.g. /** ...|
-						beforeText: new js.RegExp("^\\s*\\/\\*\\*(?!\\/)([^\\*]|\\*(?!\\/))*$"),
-						action: { indentAction: vscode.IndentAction.None, appendText: strCommentPrefix }
-					},
-					{
-						// e.g.  * ...|
-						beforeText: new js.RegExp("^(\\t|(\\ \\ ))*\\ \\*(\\ ([^\\*]|\\*(?!\\/))*)?$"),
-						action: { indentAction: vscode.IndentAction.None, appendText: strCommentPrefix }
-					},
-					{
-						// e.g.  */|
-						beforeText: new js.RegExp("^(\\t|(\\ \\ ))*\\ \\*\\/\\s*$"),
-						action: { indentAction: vscode.IndentAction.None, removeText: 1 }
-					},
-					{
-						// e.g.  *-----*/|
-						beforeText: new js.RegExp("^(\\t|(\\ \\ ))*\\ \\*[^/]*\\*\\/\\s*$"),
-						action: { indentAction: vscode.IndentAction.None, removeText: 1 }
-					}
-#end					
-				]
-			});
-		}
-	}
-
-	/**
 	 *  Exported `activate` method called when the command is first activated.
 	 *  @param context - the `ExtensionContext` provided by vscode. 
 	 */
@@ -148,6 +83,43 @@ class CodeDox
 	{
 		new CodeDox(context);
 	} 
+
+	/**
+	 *  Constructor
+	 */
+	public function new(context:ExtensionContext)
+	{
+		m_fileHeader = null;
+		m_commenter = null;
+		s_extPath = context.extensionPath;
+
+		context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void){Settings.clearCache(); applyOnEnterRules(context);}));
+		context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument(onTextChange));
+
+		registerCommand(context, CMD_SETUP, doSetup);
+		registerTextEditorCommand(context, CMD_INSERT_FILE_HEADER, insertFileHeader);
+		registerTextEditorCommand(context, CMD_INSERT_COMMENT, insertComment);
+
+		applyOnEnterRules(context);
+	}
+
+	/**
+	 *  Add onEnter rules for all supported languages.
+	 *  @param context - the `ExtensionContext`
+	 */
+	private function applyOnEnterRules(context:ExtensionContext) : Void
+	{
+		for(strLang in Settings.getSupportedLanguages())
+		{
+			var settings = Settings.fetch(strLang);
+			if(settings.autoPrefixOnEnter)	
+			{
+				var rules = EnterRules.createRules(settings);
+				var disposable = Vscode.languages.setLanguageConfiguration(strLang, {onEnterRules:rules});
+				context.subscriptions.push(disposable);
+			}
+		}
+	}
 
 	/**
 	 *  Registers a command with vscode such that the `callback` will get
@@ -308,16 +280,32 @@ class CodeDox
 			// A comment insert was just performed and we need to put the cursor in the right place, and possibly
 			// select a comment description so the user can just start typing to overwrite it.
 			m_commenter.isInsertPending = false;
-			if(strChangeText.indexOf(settings.strCommentDescription) != -1)
+			if(StringUtil.hasChars(settings.strCommentDescription) && strChangeText.indexOf(settings.strCommentDescription) != -1)
 			{
+				// Select the "Description" text.
 				var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentDescription);
 				if(ft != null)
 				{
 					editor.selection = new Selection(ft.posEnd, ft.posStart);
 				}
 			}
+			else if(strChangeText.indexOf(settings.strCommentToken) != -1)
+			{
+				// Multiline comment for a type. Place cursor at token, then delete token.
+				var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentToken);
+				if(ft != null)
+				{
+					var p:Position = new Position(ft.posEnd.line, ft.posEnd.character + 1);
+					editor.selection = new Selection(p, p);
+					editor.edit(function(edit:TextEditorEdit)
+					{
+						edit.delete(new vscode.Range(ft.posStart, ft.posEnd));
+					}, {undoStopBefore:false, undoStopAfter:false});
+				}
+			}
 			else if(strChangeText.trim() == settings.strCommentBegin + " " + settings.strCommentEnd)
 			{
+				// Single line comment was added.  Position cursor 1 char after the comment begin.
 				var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentBegin);
 				if(ft != null)
 				{
@@ -412,7 +400,7 @@ class CodeDox
 		{
 			m_fileHeader.insertFileHeader(line, editor, edit);
 
-		}, {undoStopBefore:false, undoStopAfter:true});
+		}, {undoStopBefore:false, undoStopAfter:false});
 	}
 
 	/**
@@ -433,7 +421,7 @@ class CodeDox
 		{
 			m_commenter.insertComment(line, editor, edit);
 
-		}, {undoStopBefore:false, undoStopAfter:true});
+		}, {undoStopBefore:false, undoStopAfter:false});
 	}
 
 	/**
@@ -476,14 +464,9 @@ class CodeDox
 	 *  @param strLangId - the language id to check
 	 *  @return Bool
 	 */
-	private inline function isLanguageSupported(strLangId:String) : Bool
+	private static inline function isLanguageSupported(strLangId:String) : Bool
 	{
-		return switch(strLangId)
-		{
-			case "haxe": true;
-			// TODO:  add additional languages here
-			default: false;
-		}
+		return Settings.getSupportedLanguages().indexOf(strLangId) != -1;
 	}
 
 	/**

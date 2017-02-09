@@ -10,6 +10,7 @@
 		"commentbegin": "/**",
 		"commentend": " */",
 		"commentdescription": "[Description]",
+		"alwaysMultiline": true,
 		"headerprefix": " *",
 		"headerbegin": "/*",
 		"headerend": " */",

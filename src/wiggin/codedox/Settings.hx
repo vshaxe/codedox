@@ -22,6 +22,7 @@ package wiggin.codedox;
 
 import vscode.WorkspaceConfiguration;
 import wiggin.util.StringUtil;
+import wiggin.util.DynamicObject;
 
 private typedef Context = {strLanguage:String, config:WorkspaceConfiguration}
 
@@ -41,7 +42,9 @@ class Settings
 	public var strCommentEnd(default,null) : String;
 	public var strCommentPrefix(default,null) : String;
 	public var strCommentDescription(default,null) : String;
+	public var strCommentToken(default,null) : String;
 	public var strCommentTrigger(default,null) : String;
+	public var alwaysMultiline(default,null) : Bool;
 	public var strAutoClosingClose(default,null) : String;
 	public var strAutoClosingCloseAlt(default,null) : String;
 	public var strHeaderBegin(default,null) : String;
@@ -110,7 +113,9 @@ class Settings
 		this.strCommentEnd = getProp("commentend", " */", ctx);
 		this.strCommentPrefix = getProp("commentprefix", " *  ", ctx);
 		this.strCommentDescription = getProp("commentdescription", "[Description]", ctx);
+		this.strCommentToken = "[]";
 		this.strCommentTrigger = StringUtil.right(strCommentBegin, 1);
+		this.alwaysMultiline = getProp("alwaysMultiline", true, ctx);
 		this.strAutoClosingClose = (strAutoClose != null) ? strAutoClose : "";
 		this.strAutoClosingCloseAlt = (strAutoCloseAlt != null) ? strAutoCloseAlt : "";
 		this.strHeaderBegin = getProp("headerbegin", "/*", ctx);
@@ -149,6 +154,32 @@ class Settings
 			}
 		}
 		return val;
+	}
+
+	/**
+	 *  Returns an array of language ids supported by codedox.  The language ids are listed
+	 *  in the "codedox.languages" property of the config. 
+	 *  
+	 *  "haxe" is always supported regardless of whether it is listed or not.
+	 *  
+	 *  @return Array<String>
+	 */
+	public static function getSupportedLanguages() : Array<String>
+	{
+		var arr = ["haxe"];
+		var config = Vscode.workspace.getConfiguration();
+		var langs:DynamicObject<String> = config.get(LANGUAGES);
+		if(langs != null)
+		{
+			for(key in langs.keys())
+			{
+				if(key != "haxe")
+				{
+					arr.push(key);
+				}
+			}
+		}
+		return arr;
 	}
 
 	/**

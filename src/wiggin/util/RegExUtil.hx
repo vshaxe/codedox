@@ -46,9 +46,14 @@ class RegExUtil
 	 */
 	public static function escapeRegexChars(strChars:String) : String
 	{
+		if(!StringUtil.hasChars(strChars))
+		{
+			return "";
+		}
+
 		var sb = new StringBuf();
 		var it = new StringIterator(strChars);
-		var arrMeta = ["^", "[", "." , "$", "{", "*", "(", "\\", "+", ")", "|", "?", "<", ">"];
+		var arrMeta = ["^", "[", "." , "$", "{", "*", "(", "\\", "/", "+", ")", "|", "?", "<", ">", " "];
 		for(ch in it)
 		{
 			if(StringUtil.contains(ch, arrMeta))
