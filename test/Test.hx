@@ -1,4 +1,3 @@
-
 package ;
 
 class Test 
@@ -12,7 +11,7 @@ class Test
 
     private static function getMessage(str:String, num:Int) : String
 	{
-		return "message: " + str + num;
+		return "message: " + str + num; 
 	}
 
 	@MyAnnot("Hi there")
@@ -30,11 +29,11 @@ class Test
 	}
 
 	public function paramInference(foo)
-	{
-
+	{ 
+	
 	}
 
-	private function noBraces(i:Int) return switch(i) { 
+	private function noBraces(i:Int) return switch(i) {
 		case 0: "0";
 		case 1: "1";
 		default: "?";

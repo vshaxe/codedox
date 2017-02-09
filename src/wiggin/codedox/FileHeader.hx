@@ -192,7 +192,7 @@ class FileHeader
 		var params:Dynamic = StructUtil.mergeStruct(paramsStar, paramsLang);
 
 		var mapParams:Map<String,Dynamic> = JsonUtil.isStruct(params) ? JsonUtil.structToMap(params) : new Map();
-		addDefaultParams(mapParams);
+		addDefaultParams(mapParams, strLang);
 		addDefaultLicenses(mapParams);
 		var strRet = ParamUtil.applyParams(strTemplate, mapParams);
 		return strRet;
@@ -203,13 +203,14 @@ class FileHeader
 	 *  current year, date, time, etc. 
 	 *
 	 *  @param map - the map to populate.
+	 *  @param strLang - the language id for the current editor document. e.g. "haxe"
 	 */
-	private static function addDefaultParams(map:Map<String,Dynamic>) : Void
+	private static function addDefaultParams(map:Map<String,Dynamic>, strLang:String) : Void
 	{
 		// Add the built-in params like current year, date, time, etc.
 		ParamUtil.addDefaultParams(map);
 		
-		var settings = CodeDox.getSettings();
+		var settings = Settings.fetch(strLang);
 		ParamUtil.setIfAbsent(map, "commentbegin", settings.strCommentBegin);
 		ParamUtil.setIfAbsent(map, "commentprefix", settings.strCommentPrefix);
 		ParamUtil.setIfAbsent(map, "commentend", settings.strCommentEnd);

@@ -22,11 +22,11 @@
 package wiggin.codedox;
 
 import js.Promise;
-import vscode.WorkspaceConfiguration;
 import vscode.ExtensionContext;
 import vscode.TextEditor;
 import vscode.TextEditorEdit;
 import vscode.TextDocumentChangeEvent;
+import vscode.TextDocumentContentChangeEvent;
 import vscode.TextLine;
 import vscode.Selection;
 import vscode.Position;
@@ -35,11 +35,9 @@ import wiggin.codedox.Commenter;
 import wiggin.util.StringUtil;
 import wiggin.util.ParseUtil;
 using StringTools;
+using Lambda;
 
-typedef Settings = {autoInsert:Bool, autoInsertHeader:Bool, strParamFormat:String, strReturnFormat:String, 
-					strCommentBegin:String, strCommentEnd:String, strCommentPrefix:String, strCommentDescription:String, 
-					strCommentTrigger:String, strAutoClosingClose:String, strAutoClosingCloseAlt:String, strHeaderBegin:String, 
-					strHeaderEnd:String, strHeaderPrefix:String, strHeaderTrigger:String, allowOptionalArgs:Bool }
+typedef CheckAction = TextDocumentContentChangeEvent->Settings->TextEditor->Bool;
 
 /**
  *  Main extension class.
@@ -67,9 +65,6 @@ class CodeDox
 	/** Command name for insert comment */
 	public static inline var CMD_INSERT_COMMENT = FEATURE_COMMENT + ".insert";
 
-	/** Settings, lazy fetched */
-	private static var s_settings:Settings = null;
-
 	/** Path to extension installation. **/
 	private static var s_extPath:String = null;
 
@@ -80,63 +75,6 @@ class CodeDox
 	private var m_commenter:Commenter;
 
 	/**
-	 *  Constructor
-	 */
-	public function new(context:ExtensionContext)
-	{
-		m_fileHeader = null;
-		m_commenter = null;
-		s_extPath = context.extensionPath;
-
-		context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void){s_settings=null;}));
-		context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument(onTextChange));
-
-		registerCommand(context, CMD_SETUP, doSetup);
-		registerTextEditorCommand(context, CMD_INSERT_FILE_HEADER, insertFileHeader);
-		registerTextEditorCommand(context, CMD_INSERT_COMMENT, insertComment);
-
-		// Add onEnter rules.
-		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(EXTENSION_NAME);
-		var bAutoPrefixOnEnter = config.get("autoPrefixOnEnter", true);
-		var strCommentPrefix = config.get("commentprefix", "*  ");
-		if(bAutoPrefixOnEnter)
-		{
-			Vscode.languages.setLanguageConfiguration("haxe", 
-			{
-				// TODO: modify these regex to use settings.strCommentBegin, settings.strCommentEnd, etc
-				onEnterRules: [
-					{				
-						// e.g. /** | */
-						beforeText: new js.RegExp("^\\s*\\/\\*\\*(?!\\/)([^\\*]|\\*(?!\\/))*$"),
-						afterText: new js.RegExp("^\\s*\\*\\/$"),
-						action: { indentAction: vscode.IndentAction.IndentOutdent, appendText: " " + strCommentPrefix }
-					},
-					{
-						// e.g. /** ...|
-						beforeText: new js.RegExp("^\\s*\\/\\*\\*(?!\\/)([^\\*]|\\*(?!\\/))*$"),
-						action: { indentAction: vscode.IndentAction.None, appendText: " " + strCommentPrefix }
-					},
-					{
-						// e.g.  * ...|
-						beforeText: new js.RegExp("^(\\t|(\\ \\ ))*\\ \\*(\\ ([^\\*]|\\*(?!\\/))*)?$"),
-						action: { indentAction: vscode.IndentAction.None, appendText: strCommentPrefix }
-					},
-					{
-						// e.g.  */|
-						beforeText: new js.RegExp("^(\\t|(\\ \\ ))*\\ \\*\\/\\s*$"),
-						action: { indentAction: vscode.IndentAction.None, removeText: 1 }
-					},
-					{
-						// e.g.  *-----*/|
-						beforeText: new js.RegExp("^(\\t|(\\ \\ ))*\\ \\*[^/]*\\*\\/\\s*$"),
-						action: { indentAction: vscode.IndentAction.None, removeText: 1 }
-					}
-				]
-			});
-		}
-	}
-
-	/**
 	 *  Exported `activate` method called when the command is first activated.
 	 *  @param context - the `ExtensionContext` provided by vscode. 
 	 */
@@ -145,6 +83,43 @@ class CodeDox
 	{
 		new CodeDox(context);
 	} 
+
+	/**
+	 *  Constructor
+	 */
+	public function new(context:ExtensionContext)
+	{
+		m_fileHeader = null;
+		m_commenter = null;
+		s_extPath = context.extensionPath;
+
+		context.subscriptions.push(Vscode.workspace.onDidChangeConfiguration(function(Void){Settings.clearCache(); applyOnEnterRules(context);}));
+		context.subscriptions.push(Vscode.workspace.onDidChangeTextDocument(onTextChange));
+
+		registerCommand(context, CMD_SETUP, doSetup);
+		registerTextEditorCommand(context, CMD_INSERT_FILE_HEADER, insertFileHeader);
+		registerTextEditorCommand(context, CMD_INSERT_COMMENT, insertComment);
+
+		applyOnEnterRules(context);
+	}
+
+	/**
+	 *  Add onEnter rules for all supported languages.
+	 *  @param context - the `ExtensionContext`
+	 */
+	private function applyOnEnterRules(context:ExtensionContext) : Void
+	{
+		for(strLang in Settings.getSupportedLanguages())
+		{
+			var settings = Settings.fetch(strLang);
+			if(settings.autoPrefixOnEnter)	
+			{
+				var rules = EnterRules.createRules(settings);
+				var disposable = Vscode.languages.setLanguageConfiguration(strLang, {onEnterRules:rules});
+				context.subscriptions.push(disposable);
+			}
+		}
+	}
 
 	/**
 	 *  Registers a command with vscode such that the `callback` will get
@@ -252,9 +227,8 @@ class CodeDox
 		try
 		{
 			// Vast majority of keystrokes will not result in an insert, so try to exit fast.
-			var settings:Settings = getSettings();
 			var doc = evt.document;
-			if((!settings.autoInsert && !settings.autoInsertHeader) || !isLangaugeSupported(doc.languageId) || evt.contentChanges.length != 1)
+			if(!isLanguageSupported(doc.languageId) || evt.contentChanges.length != 1)
 			{
 				return;
 			}
@@ -265,64 +239,148 @@ class CodeDox
 				return;
 			}
 
-			var change = evt.contentChanges[0];
-			var strChangeText = change.text;
-
-			if(StringUtil.hasChars(strChangeText))
+			var settings:Settings = Settings.fetch(doc.languageId);
+			if(!settings.autoInsert && !settings.autoInsertHeader)
 			{
-				if(m_commenter != null && m_commenter.isInsertPending)
-				{
-					// A comment insert was just performed and we need to put the cursor in the right place, and possibly
-					// select a comment decription so the user can just start typing to overwrite it.
-					m_commenter.isInsertPending = false;
-					if(strChangeText.indexOf(settings.strCommentDescription) != -1)
-					{
-						var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentDescription);
-						if(ft != null)
-						{
-							editor.selection = new Selection(ft.posEnd, ft.posStart);
-						}
-					}
-					else if(strChangeText.trim() == settings.strCommentBegin + "  " + settings.strCommentEnd)
-					{
-						var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentBegin);
-						if(ft != null)
-						{
-							var p:Position = new Position(ft.posEnd.line, ft.posEnd.character + 1);
-							editor.selection = new Selection(p, p);
-						}
-					}
-				}
-				else if(settings.autoInsertHeader && strChangeText == settings.strHeaderTrigger && 
-				        doc.offsetAt(change.range.end) == 1 && change.range.isEmpty)
-				{
-					// A header comment trigger was typed at the top of file. 
-					var line = doc.lineAt(0);
-					if(line.text == settings.strHeaderBegin)
-					{
-						doHeaderInsert(line, editor);
-					}  
-				}
-				else if(settings.autoInsert && strChangeText == settings.strCommentTrigger || 
-				        strChangeText == settings.strCommentTrigger + settings.strAutoClosingClose ||
-						strChangeText == settings.strCommentTrigger + settings.strAutoClosingCloseAlt)
-				{
-					// A function comment trigger was typed.
-					var line = doc.lineAt(change.range.start.line);
-					var strCheck = StringUtil.trim(line.text);
-					if(strCheck == settings.strCommentBegin || 
-					   strCheck == settings.strCommentBegin + settings.strAutoClosingClose ||
-					   strCheck == settings.strCommentBegin + settings.strAutoClosingCloseAlt)
-					{
-						doCommentInsert(line, editor);
-					}
-				}
+				return;
+			}
+
+			var change = evt.contentChanges[0];
+			if(StringUtil.hasChars(change.text))
+			{
+				var arr:Array<CheckAction> = [checkInsertPending, checkInsertHeader, checkInsertComment];
+				arr.foreach(function(fn) {return !fn(change, settings, editor);});
 			}
 		}
 		catch(e:Dynamic)
 		{
 			handleError("", e, haxe.CallStack.exceptionStack());
 		}
+	}
+
+	/**
+	 *  Checks if the `TextDocumentContentChangeEvent` requires "insert-pending" handling, meaning an insert is pending
+	 *  and we need to reposition the cursor.
+	 *  
+	 *  @param change - the `TextDocumentContentChangeEvent` 
+	 *  @param settings - the current `Settings` object 
+	 *  @param editor - the current `TextEditor` object
+	 *  @return Bool - true if the event was processed
+	 */
+	private function checkInsertPending(change:TextDocumentContentChangeEvent, settings:Settings, editor:TextEditor) : Bool
+	{
+		var bRet = false;
+		var strChangeText = change.text;
+		var doc = editor.document;
+
+		if(m_commenter != null && m_commenter.isInsertPending && strChangeText != null)
+		{
+			bRet = true;
+
+			// A comment insert was just performed and we need to put the cursor in the right place, and possibly
+			// select a comment description so the user can just start typing to overwrite it.
+			m_commenter.isInsertPending = false;
+			if(StringUtil.hasChars(settings.strCommentDescription) && strChangeText.indexOf(settings.strCommentDescription) != -1)
+			{
+				// Select the "Description" text.
+				var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentDescription);
+				if(ft != null)
+				{
+					editor.selection = new Selection(ft.posEnd, ft.posStart);
+				}
+			}
+			else if(strChangeText.indexOf(settings.strCommentToken) != -1)
+			{
+				// Multiline comment for a type. Place cursor at token, then delete token.
+				var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentToken);
+				if(ft != null)
+				{
+					var p:Position = new Position(ft.posEnd.line, ft.posEnd.character + 1);
+					editor.selection = new Selection(p, p);
+					editor.edit(function(edit:TextEditorEdit)
+					{
+						edit.delete(new vscode.Range(ft.posStart, ft.posEnd));
+					}, {undoStopBefore:false, undoStopAfter:false});
+				}
+			}
+			else if(strChangeText.trim() == settings.strCommentBegin + " " + settings.strCommentEnd)
+			{
+				// Single line comment was added.  Position cursor 1 char after the comment begin.
+				var ft:FoundText = ParseUtil.findText(doc, change.range.start, settings.strCommentBegin);
+				if(ft != null)
+				{
+					var p:Position = new Position(ft.posEnd.line, ft.posEnd.character + 1);
+					editor.selection = new Selection(p, p);
+				}
+			}
+		}
+		CodeDox.log("checkInsertPending: " + bRet);
+		return bRet;
+	}
+
+	/**
+	 *  Checks if the `TextDocumentContentChangeEvent` should trigger a header insert.
+	 *  
+	 *  @param change - the `TextDocumentContentChangeEvent` 
+	 *  @param settings - the current `Settings` object 
+	 *  @param editor - the current `TextEditor` object
+	 *  @return Bool - true if the event was processed
+	 */
+	private function checkInsertHeader(change:TextDocumentContentChangeEvent, settings:Settings, editor:TextEditor) : Bool
+	{
+		var bRet = false;
+
+		if(settings.autoInsertHeader && 
+		   StringUtil.startsWith(change.text, settings.strHeaderTrigger) && 
+		   change.range.end.line == 0 && 
+		   change.range.isEmpty)
+		{
+			bRet = true;
+
+			// A header comment trigger was typed at the top of file. 
+			var line = editor.document.lineAt(0);
+			var strLine = line.text;
+			if(strLine == settings.strHeaderBegin || strLine == settings.strHeaderBegin + settings.strHeaderEnd)
+			{
+				doHeaderInsert(line, editor);
+			}  
+		}
+		CodeDox.log("checkInsertHeader: " + bRet);
+		return bRet;
+	}
+
+	/**
+	 *  Checks if the `TextDocumentContentChangeEvent` should trigger a comment insert.  This could be
+	 *  a function or type comment.
+	 *  
+	 *  @param change - the `TextDocumentContentChangeEvent` 
+	 *  @param settings - the current `Settings` object 
+	 *  @param editor - the current `TextEditor` object
+	 *  @return Bool - true if the event was processed
+	 */
+	private function checkInsertComment(change:TextDocumentContentChangeEvent, settings:Settings, editor:TextEditor) : Bool
+	{
+		var bRet = false;
+		var strChangeText = change.text;
+
+		if(settings.autoInsert && strChangeText == settings.strCommentTrigger || 
+		   strChangeText == settings.strCommentTrigger + settings.strAutoClosingClose ||
+		   strChangeText == settings.strCommentTrigger + settings.strAutoClosingCloseAlt)
+		{
+			bRet = true;
+
+			// A function comment trigger was typed.
+			var line = editor.document.lineAt(change.range.start.line);
+			var strCheck = StringUtil.trim(line.text);
+			if(strCheck == settings.strCommentBegin || 
+				strCheck == settings.strCommentBegin + settings.strAutoClosingClose ||
+				strCheck == settings.strCommentBegin + settings.strAutoClosingCloseAlt)
+			{
+				doCommentInsert(line, editor);
+			}
+		}
+		CodeDox.log("checkInsertComment: " + bRet);
+		return bRet;
 	}
 
 	/**
@@ -342,7 +400,7 @@ class CodeDox
 		{
 			m_fileHeader.insertFileHeader(line, editor, edit);
 
-		}, {undoStopBefore:false, undoStopAfter:true});
+		}, {undoStopBefore:false, undoStopAfter:false});
 	}
 
 	/**
@@ -363,7 +421,7 @@ class CodeDox
 		{
 			m_commenter.insertComment(line, editor, edit);
 
-		}, {undoStopBefore:false, undoStopAfter:true});
+		}, {undoStopBefore:false, undoStopAfter:false});
 	}
 
 	/**
@@ -406,51 +464,25 @@ class CodeDox
 	 *  @param strLangId - the language id to check
 	 *  @return Bool
 	 */
-	private inline function isLangaugeSupported(strLangId:String) : Bool
+	private static inline function isLanguageSupported(strLangId:String) : Bool
 	{
-		return switch(strLangId)
-		{
-			case "haxe": true;
-			// TODO:  add additional languages here
-			default: false;
-		}
+		return Settings.getSupportedLanguages().indexOf(strLangId) != -1;
 	}
 
 	/**
-	 *  Lazy fetches extension settings from config, caching the result so we don't have
-	 *  to look this up each keystroke.
-	 *  @return `Settings`
+	 *  Returns the language id for the current editor/document, or null if no 
+	 *  editor/document is present.
+	 *  @return String or null
 	 */
-	public static function getSettings() : Settings
+	public static function getCurrentLanguageId() : Null<String>
 	{
-		if(s_settings == null)
+		var strLang:Null<String> = null;
+		var editor = Vscode.window.activeTextEditor;
+		if(editor != null && editor.document != null)
 		{
-			var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(EXTENSION_NAME);
-			var strCommentBegin = config.get("commentbegin", "/**");
-			var strHeaderBegin = config.get("headerbegin", "/*");
-			var strAutoClose = getAutoClosingClose(strCommentBegin, false);
-			var strAutoCloseAlt = getAutoClosingClose(strCommentBegin, true);
-
-			s_settings = {
-				autoInsert: config.get("autoInsert", true),
-				autoInsertHeader: config.get("autoInsertHeader", true),
-				strParamFormat: config.get("paramFormat", "@param ${name} - "),
-				strReturnFormat: config.get("returnFormat", "@return ${type}"),
-				strCommentBegin: strCommentBegin,
-				strCommentEnd: config.get("commentend", " */"),
-				strCommentPrefix: config.get("commentprefix", " *  "),
-				strCommentDescription: config.get("commentdescription", "[Description]"),
-				strCommentTrigger: StringUtil.right(strCommentBegin, 1),
-				strAutoClosingClose: (strAutoClose != null) ? strAutoClose : "",
-				strAutoClosingCloseAlt: (strAutoCloseAlt != null) ? strAutoCloseAlt : "",
-				strHeaderBegin: config.get("headerbegin", "/*"),
-				strHeaderEnd: config.get("headerend", "*/"),
-				strHeaderPrefix: config.get("headerprefix", " *"),
-				strHeaderTrigger: StringUtil.right(strHeaderBegin, 1),
-				allowOptionalArgs: config.get("allowOptionalArgs", false)
-			};
+			strLang = editor.document.languageId;
 		}
-		return s_settings;
+		return strLang;
 	}
 
 	/**
@@ -462,28 +494,5 @@ class CodeDox
 		return s_extPath;
 	}
 
-	/**
-	 *  Returns the autoclosing close string for the specified opening string.
-	 *  e.g. "\**" is usually closed with "*\".
-	 *  
-	 *  @param strAutoClosingOpen - the opening string of an autoclosing pair
-	 *  @param bAlt - true if the alternative close pair is to be returned
-	 *  @return String or null
-	 */
-	private static function getAutoClosingClose(strAutoClosingOpen:String, ?bAlt = false) : Null<String>
-	{
-		// Dammit. Vscode won't let me lookup the LanguageConfiguration settings.
-		// Maybe this will be added in the future: https://github.com/Microsoft/vscode/issues/2871
-
-		// We'll have to hack something for now...
-		return switch(strAutoClosingOpen)
-		{
-			// For some reason the Haxe extension configures vscode to autoclose with double asterisk.
-			case "/**": (bAlt) ? "*/" : "**/";  
-
-			// Just reverse the open until we can read the real value??
-			default: StringUtil.reverse(strAutoClosingOpen);  
-		}
-	}
 
 } // end of CodeDox class

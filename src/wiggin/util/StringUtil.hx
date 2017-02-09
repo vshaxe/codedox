@@ -243,6 +243,30 @@ class StringUtil
 		return false;
 	}
 
+	/**
+	 *  Returns true if the string `str` starts with `strStart`. If either param
+	 *  is null then false is returned.
+	 *  @param str - the string to search 
+	 *  @param strStart - the substring to search for
+	 *  @return Bool - true if `str` starts with `strStart` and both are not null
+	 */
+	public static inline function startsWith(str:String, strStart:String) : Bool
+	{
+		return (str != null && strStart != null) ? StringTools.startsWith(str, strStart) : false;
+	}
+
+	/**
+	 *  Returns true if the string `str` ends with `strEnd`. If either param
+	 *  is null then false is returned.
+	 *  @param str - the string to search 
+	 *  @param strEnd - the substring to search for
+	 *  @return Bool - true if `str` ends with `strEnd` and both are not null
+	 */
+	public static inline function endsWith(str:String, strEnd:String) : Bool
+	{
+		return (str != null && strEnd != null) ? StringTools.startsWith(str, strEnd) : false;
+	}
+
 } // end of StringUtil class
 
 /**
