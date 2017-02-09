@@ -2,13 +2,17 @@
 
 ## 1.2.4
 
-* Fix [issue 10](https://github.com/wiggin77/codedox/issues/10) "commentend" & "commentprefix" have hardcoded space.
-* Fix [issue 8](https://github.com/wiggin77/codedox/issues/8) Params using type inference not handled properly.
+* New config option `alwaysMultiline:boolean`. If true then all comments are multiline, otherwise non-functions (types) are single line
+* OnEnter rules dynamically generated for custom configs
+* Fix [issue 12](https://github.com/wiggin77/codedox/issues/12) Spaces added for non-function docs
+* Fix [issue 10](https://github.com/wiggin77/codedox/issues/10) "commentend" & "commentprefix" have hardcoded space
+* Fix [issue 8](https://github.com/wiggin77/codedox/issues/8) Params using type inference not handled properly
+* Prepare for additional languages
 
 ## 1.2.3
 
 * Fix "window.activeTextEditor can be null" via [Gamma11 PR](https://github.com/wiggin77/codedox/pull/5)
-* Fix [issue 4](https://github.com/wiggin77/codedox/issues/4) Debug output in release.
+* Fix [issue 4](https://github.com/wiggin77/codedox/issues/4) Debug output in release
 * Fixed README typos
 
 ## 1.2.2
