@@ -59,6 +59,7 @@ If you want to create a custom license/copyright template or want to change how 
 	"paramFormat": "@param ${name} - ", // supports ${name} and ${type}, plus built-in params
 	"returnFormat": "@return ${type}", // supports ${type}, plus built-in params
 	"allowOptionalArgs": false, // false strips the '?' prefix from optional function args
+	"alwaysMultiline": true, // if false non-functions (types) are single line
     "commentprefix": "*  ",
     "commentbegin": "/**",
     "commentend": "*/",
