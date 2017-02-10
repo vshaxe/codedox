@@ -23,11 +23,11 @@
         "license",
         "copyright"
     ],
-    "bugs": "https://github.com/wiggin77/codedox/issues",
-    "homepage": "https://github.com/wiggin77/codedox/blob/master/README.md",
+    "bugs": "https://github.com/vshaxe/codedox/issues",
+    "homepage": "https://github.com/vshaxe/codedox/blob/master/README.md",
     "repository": {
         "type": "git",
-        "url": "https://github.com/wiggin77/codedox"
+        "url": "https://github.com/vshaxe/codedox"
     },
     "activationEvents": [
         "onLanguage:haxe",
