@@ -1,0 +1,4 @@
+language: haxe
+sudo: false
+hxml:
+  - build-release.hxml
