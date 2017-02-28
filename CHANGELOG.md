@@ -1,5 +1,11 @@
 # Codedox change log
 
+## 1.2.5
+
+* Travis-CI integraton
+* New icon
+* README edits
+
 ## 1.2.4
 
 * Repo moved to [vshaxe](https://github.com/vshaxe) organization

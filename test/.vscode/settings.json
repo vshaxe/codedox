@@ -19,12 +19,12 @@
 		//"returnFormat": "\n@return ${type}\n",
 		//"alwaysMultiline": false,
 
-		"commentbegin": "/**",
-		"commentprefix": "    ",
-		"commentend": "**/",
-		"headerbegin": "/**",
-		"headerprefix": "    ",
-		"headerend": "**/",
+		//"commentbegin": "/**",
+		//"commentprefix": "    ",
+		//"commentend": "**/",
+		//"headerbegin": "/**",
+		//"headerprefix": "    ",
+		//"headerend": "**/",
 		"commentdescription": "[Description]\n",
 
 		"fileheader": {
