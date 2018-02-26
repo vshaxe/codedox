@@ -113,6 +113,16 @@ class ParamUtil
 
 		setIfAbsent(map, "date", DateTools.format(date, "%F"));
 		setIfAbsent(map, "time", DateTools.format(date, "%l:%M:%S %p"));
+
+		var editor = Vscode.window.activeTextEditor;
+		if(editor != null && editor.document != null)
+		{
+			setIfAbsent(map, "fname", PathUtil.parseFilename(editor.document.fileName));
+
+			
+		}
+
+
 	}
 
 	/**
