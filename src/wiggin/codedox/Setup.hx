@@ -78,7 +78,7 @@ class Setup
 			var item1:QuickPickItem = {label:Scope.USER, description:"Stored globally, applies to any instance of VS Code"};
 			var item2:QuickPickItem = {label:Scope.WORKSPACE, description:"Stored inside current workspace in the .vscode folder"};
 			
-			if(Vscode.workspace.rootPath == null)
+			if(Vscode.workspace.workspaceFolders.length > 0)
 			{
 				// Can only write to USER when no folder opened.
 				m_transaction.scope = Scope.USER;

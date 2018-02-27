@@ -117,12 +117,14 @@ class ParamUtil
 		var editor = Vscode.window.activeTextEditor;
 		if(editor != null && editor.document != null)
 		{
+			// include the filename and filespec
 			setIfAbsent(map, "fname", PathUtil.parseFilename(editor.document.fileName));
+			setIfAbsent(map, "fspec", editor.document.fileName);
 
-			
+			// include filespec relative to workspace directory
+			var rel = Vscode.workspace.asRelativePath(editor.document.uri, false);
+			setIfAbsent(map, "frel", rel);
 		}
-
-
 	}
 
 	/**

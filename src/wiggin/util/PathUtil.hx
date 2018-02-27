@@ -30,16 +30,16 @@ class PathUtil
 	 */
 	public static function parseFilename(str:String) : String 
 	{
-		var path = new haxe.io.Path(str)
+		var path = new haxe.io.Path(str);
 		var strRet = toEmpty(path.file);
 		if(path.ext != null)
 		{
 			strRet += "." + path.ext;
 		}
-		return strRet
+		return strRet;
 	}
 
-	private static inline toEmpty(str:String) : String
+	private static inline function toEmpty(str:String) : String
 	{
 		return (str != null) ? str : "";
 	}

@@ -35,6 +35,9 @@
 			},
 			"templates": {
 				"*": [
+					"${fname}\n",
+					"${fspec}\n",
+					"${frel}\n",
 					"${license_mit}"
 				]
 			}

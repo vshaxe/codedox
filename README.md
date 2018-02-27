@@ -94,6 +94,9 @@ Param         |  Result
 --------------|---------------------
 ${name}                  | variable name (function comments only)
 ${type}                  | variable or function type (function comments only)
+${fname}                 | name of current file
+${fspec}                 | absolute path and name of current file
+${frel}                  | path and name of current file relative to workspace
 ${year}                  | 2017
 ${month}                 | 1
 ${day}                   | 2
