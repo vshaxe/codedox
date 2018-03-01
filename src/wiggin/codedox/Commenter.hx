@@ -192,6 +192,7 @@ class Commenter
 	{
 		var strIndent = info.strIndent;
 		var strPrefix = settings.strCommentPrefix;
+		var map = new Map<String,String>();
 
 		var sb = new StringBuf();
 		sb.add(strIndent);
@@ -219,23 +220,21 @@ class Commenter
 				var mapP = ["name" => item.name, "type" => item.type];
 				ParamUtil.addDefaultParams(mapP);
 				var strP = ParamUtil.applyParams(settings.strParamFormat, mapP);
-
 				composeCommentLines(sb, strP, strIndent, strPrefix);
 			}
 		}
 
 		if(StringUtil.hasChars(info.retType) && info.retType != "Void" && StringUtil.hasChars(settings.strReturnFormat))
 		{
-			var mapR = ["type" => info.retType];
-			ParamUtil.addDefaultParams(mapR);
-			var strR = ParamUtil.applyParams(settings.strReturnFormat, mapR);
-
-			composeCommentLines(sb, strR, strIndent, strPrefix);
+			map.set("type", info.retType);
+			composeCommentLines(sb, settings.strReturnFormat, strIndent, strPrefix);
 		}
 		sb.add(info.strIndent);
 		sb.add(settings.strCommentEnd);
 		sb.add("\n");
-		return sb.toString();
+
+		ParamUtil.addDefaultParams(map);
+		return ParamUtil.applyParams(sb.toString(), map);
 	} 
 
 	/**

@@ -15,8 +15,8 @@
     ],
 	// Codedox settings
 	"codedox": {
-		//"paramFormat": "\n@param {${type}} ${name} - \n",
-		//"returnFormat": "\n@return ${type}\n",
+		"paramFormat": "${fname} - @param {${type}} ${name} - ",
+		//"returnFormat": "@return ${type}",
 		//"alwaysMultiline": false,
 
 		//"commentbegin": "/**",
@@ -25,7 +25,7 @@
 		//"headerbegin": "/**",
 		//"headerprefix": "    ",
 		//"headerend": "**/",
-		"commentdescription": "[Description]\n",
+		"commentdescription": "${fname} - [Description]\n",
 
 		"fileheader": {
 			"params": {
@@ -35,9 +35,9 @@
 			},
 			"templates": {
 				"*": [
-					"${fname}\n",
-					"${fspec}\n",
-					"${frel}\n",
+					"// ${fname}",
+					"// ${fspec}",
+					"// ${frel}",
 					"${license_mit}"
 				]
 			}

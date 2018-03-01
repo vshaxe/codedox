@@ -1,5 +1,10 @@
 # Codedox change log
 
+## 1.2.6
+
+* Added `fname`, `fspec`, `frel` parameters; see [issue 23](https://github.com/vshaxe/codedox/issues/23)
+* Allow params in any part of method comment
+
 ## 1.2.5
 
 * Travis-CI integraton
@@ -9,7 +14,7 @@
 ## 1.2.4
 
 * Repo moved to [vshaxe](https://github.com/vshaxe) organization
-* Fix [issue 16](https://github.com/vshaxe/codedox/issues/16) support newlines in commentdescription, paramFormat, returnFormat
+* Fix [issue 16](https://github.com/vshaxe/codedox/issues/16) support newlines in comment description, paramFormat, returnFormat
 * New config option `alwaysMultiline:true`. If true then all comments are multiline, otherwise non-functions (types) are single line
 * OnEnter rules dynamically generated for custom configs
 * Fix [issue 12](https://github.com/vshaxe/codedox/issues/12) Spaces added for non-function docs
