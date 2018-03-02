@@ -31,8 +31,7 @@ private typedef Context = {strLanguage:String, config:WorkspaceConfiguration}
  */
 class Settings
 {
-	/** The properties  */
-	public var strLanguage(default,null) : String;
+	/** The properties  */	
 	public var autoPrefixOnEnter(default,null) : Bool;
 	public var autoInsert(default,null) : Bool;
 	public var autoInsertHeader(default,null) : Bool;
@@ -53,6 +52,9 @@ class Settings
 	public var strHeaderTrigger(default,null) : String;
 	public var allowOptionalArgs(default,null) : Bool;
 
+	/** The language id for which these settings were loaded. */
+	public var strLanguage(default,null) : String;
+	
 	/** Caches */
 	private static var  s_mapCache:Map<String,Settings> = new Map();
 
