@@ -112,7 +112,7 @@ class CodeDox
 		for(strLang in Settings.getSupportedLanguages())
 		{
 			var settings = Settings.fetch(strLang);
-			if(settings.autoPrefixOnEnter)	
+			if(settings.autoPrefixOnEnter && settings.strCommentPrefix.trim().length > 0)
 			{
 				var rules = EnterRules.createRules(settings);
 				var disposable = Vscode.languages.setLanguageConfiguration(strLang, {onEnterRules:rules});

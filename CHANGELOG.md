@@ -1,5 +1,9 @@
 # Codedox change log
 
+## 1.2.7
+
+* Fixed broken indentation with a `commentprefix` that only contains whitespace; see [issue 26](https://github.com/vshaxe/codedox/issues/26) 
+
 ## 1.2.6
 
 * Added `fname`, `fspec`, `frel` parameters; see [issue 23](https://github.com/vshaxe/codedox/issues/23)
