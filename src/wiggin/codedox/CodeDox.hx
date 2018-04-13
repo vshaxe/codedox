@@ -32,6 +32,7 @@ import vscode.Selection;
 import vscode.Position;
 import wiggin.codedox.FileHeader;
 import wiggin.codedox.Commenter;
+import wiggin.codedox.Resource;
 import wiggin.util.StringUtil;
 import wiggin.util.ParseUtil;
 using StringTools;
@@ -111,7 +112,7 @@ class CodeDox
 	{
 		for(strLang in Settings.getSupportedLanguages())
 		{
-			var settings = Settings.fetch(strLang);
+			var settings = Settings.fetch(new Resource(null, strLang));
 			if(settings.autoPrefixOnEnter)	
 			{
 				var rules = EnterRules.createRules(settings);
@@ -239,7 +240,7 @@ class CodeDox
 				return;
 			}
 
-			var settings:Settings = Settings.fetch(doc.languageId);
+			var settings:Settings = Settings.fetch(new Resource(doc.uri, doc.languageId));
 			if(!settings.autoInsert && !settings.autoInsertHeader)
 			{
 				return;

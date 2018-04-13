@@ -29,12 +29,13 @@ import vscode.TextLine;
 import vscode.Range;
 import vscode.MessageItem;
 import wiggin.codedox.License;
+import wiggin.codedox.Resource;
 import wiggin.util.JsonUtil;
 import wiggin.util.ParamUtil;
 import wiggin.util.ConfigUtil;
 import wiggin.util.StructUtil;
 
-typedef SetupCompleteContext = {count:Int, strLang:String}
+typedef SetupCompleteContext = {count:Int, settings:Settings}
 
 /**
  *  Implements command for inserting file header at top of files.
@@ -62,7 +63,8 @@ class FileHeader
 	 */
 	public function insertFileHeader(line:TextLine, editor:TextEditor, edit:TextEditorEdit) : Void
 	{
-		var str = getFileHeader(editor.document.languageId);
+		var settings = Settings.fetch(new Resource(editor.document.uri, editor.document.languageId));
+		var str = getFileHeader(settings);
 
 		// If the file already begins with this file header don't insert it again.
 		var doc = editor.document;
@@ -83,25 +85,25 @@ class FileHeader
 
 	/**
 	 *  Generates a file header string based on config.
-	 *  @param strLang - the language id for the current editor document. e.g. "haxe"
+	 *  @param settings - the `Settings` object
 	 */
-	private function getFileHeader(strLang:String) : String
+	private function getFileHeader(settings:Settings) : String
 	{
-		var strTemplate = getTemplate(strLang);
-		strTemplate = populateTemplate(strTemplate, strLang);
+		var strTemplate = getTemplate(settings);
+		strTemplate = populateTemplate(strTemplate, settings);
 		return strTemplate + "\n";
 	}
 
 	/**
 	 *  Fetches the template associated with the language id or the default.
 	 *
-	 *  @param strLang - the language id for the current editor document. e.g. "haxe"
+	 *  @param settings - the `Settings` object
 	 *  @return String - the formatted template ready to be inserted into document 
 	 */
-	private function getTemplate(strLang:String) : String
+	private function getTemplate(settings:Settings) : String
 	{
-		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration();
-		var template:Array<String> = getTemplateConfig(strLang);
+		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(settings.resourceUri);
+		var template:Array<String> = getTemplateConfig(settings);
 		if(template == null || template.length == 0)
 		{
 			if(config.get(CodeDox.EXTENSION_NAME + ".neverAskTemplate", false))
@@ -109,14 +111,14 @@ class FileHeader
 				throw "";  // Abort the insert, but don't display an error.
 			}
 		
-			var msg = CodeDox.EXTENSION_NAME + ": No file header template defined for " + strLang + ". Would you like to configure this feature?";
+			var msg = CodeDox.EXTENSION_NAME + ": No file header template defined for " + settings.strLanguage + ". Would you like to configure this feature?";
 			var item1:MessageItem = {title:"Yes"};
 			var item2:MessageItem = {title:"No", isCloseAffordance:true};
 			var item3:MessageItem = {title:"Never"};
 			Vscode.window.showErrorMessage(msg, item1, item2, item3).then(function(item:MessageItem){
 				if(item.title == item1.title)
 				{
-					var ctx:SetupCompleteContext = {count:0, strLang:strLang};
+					var ctx:SetupCompleteContext = {count:0, settings:settings};
 					Vscode.commands.executeCommand(CodeDox.CMD_SETUP).then(function(bResult){onSetupComplete(bResult,ctx);});
 				}
 				else if(item.title == item3.title)
@@ -140,7 +142,7 @@ class FileHeader
 			// Work-around:  despite waiting for the Promise to resolve, sometimes the workspace config update
 			//               is not available for reading right away. The latency seems to vary based on machine
 			//               and load?  Here we'll try a few times then give up.
-			var template = getTemplateConfig(cxt.strLang);
+			var template = getTemplateConfig(cxt.settings);
 			if(template == null || template.length == 0)
 			{
 				if(cxt.count <= 10)
@@ -161,13 +163,13 @@ class FileHeader
 	/**
 	 *  Fetches the raw template data associated with the language id or the default.
 	 *
-	 *  @param strLang - the language id for the current editor document. e.g. "haxe"
+	 *  @param settings - the `Settings` object
 	 *  @return Array<String> - the raw template data 
 	 */
-	private function getTemplateConfig(strLang:String) : Array<String>
+	private function getTemplateConfig(settings:Settings) : Array<String>
 	{
-		var config = Vscode.workspace.getConfiguration();
-		var template:Array<String> = config.get(TEMPLATES + "." + strLang, null);
+		var config = Vscode.workspace.getConfiguration(settings.resourceUri);
+		var template:Array<String> = config.get(TEMPLATES + "." + settings.strLanguage, null);
 		if(template == null)
 		{
 			template = config.get(TEMPLATES + ".*", null);
@@ -181,18 +183,19 @@ class FileHeader
 	 *
 	 *  @param config - the `WorkspaceConfiguration` containing settings
 	 *  @param strTemplate - the template to populate
-	 *  @param strLang - the language id for the current editor document. e.g. "haxe"
+	 *  @param settings - the `Settings` object
 	 *  @return String - the populated  template 
 	 */
-	private function populateTemplate(strTemplate:String, strLang:String) : String
+	private function populateTemplate(strTemplate:String, settings:Settings) : String
 	{
-		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration();
+		var strLang = settings.strLanguage;
+		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(settings.resourceUri);
 		var paramsStar:Dynamic = config.get(PARAMS + ".*", null);
 		var paramsLang:Dynamic = config.get(PARAMS + "." + strLang, null);
 		var params:Dynamic = StructUtil.mergeStruct(paramsStar, paramsLang);
 
 		var mapParams:Map<String,Dynamic> = JsonUtil.isStruct(params) ? JsonUtil.structToMap(params) : new Map();
-		addDefaultParams(mapParams, strLang);
+		addDefaultParams(mapParams, settings);
 		addDefaultLicenses(mapParams);
 		var strRet = ParamUtil.applyParams(strTemplate, mapParams);
 		return strRet;
@@ -203,14 +206,13 @@ class FileHeader
 	 *  current year, date, time, etc. 
 	 *
 	 *  @param map - the map to populate.
-	 *  @param strLang - the language id for the current editor document. e.g. "haxe"
+	 *  @param settings - the `Settings` object
 	 */
-	private static function addDefaultParams(map:Map<String,Dynamic>, strLang:String) : Void
+	private static function addDefaultParams(map:Map<String,Dynamic>, settings:Settings) : Void
 	{
 		// Add the built-in params like current year, date, time, etc.
 		ParamUtil.addDefaultParams(map);
 		
-		var settings = Settings.fetch(strLang);
 		ParamUtil.setIfAbsent(map, "commentbegin", settings.strCommentBegin);
 		ParamUtil.setIfAbsent(map, "commentprefix", settings.strCommentPrefix);
 		ParamUtil.setIfAbsent(map, "commentend", settings.strCommentEnd);

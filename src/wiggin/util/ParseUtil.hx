@@ -264,7 +264,7 @@ class ParseUtil
 	public static function getIndent(doc:TextDocument, pos:Position) : String
 	{
 		var workspace = Vscode.workspace;
-		var settings:vscode.WorkspaceConfiguration = workspace.getConfiguration();
+		var settings:vscode.WorkspaceConfiguration = workspace.getConfiguration(null, doc.uri);
 
 		var iTabSize = settings.get("editor.tabSize", 1);
 		var bInsertSpaces = settings.get("editor.insertSpaces", true);

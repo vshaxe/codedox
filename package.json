@@ -21,7 +21,8 @@
         "comments",
         "JSDoc",
         "license",
-        "copyright"
+		"documentation",
+		"multi-root ready"
     ],
     "bugs": "https://github.com/vshaxe/codedox/issues",
     "homepage": "https://github.com/vshaxe/codedox/blob/master/README.md",
@@ -66,89 +67,107 @@
                         "autoInsert": {
                             "description": "If true then function comment insertion is triggered by typing the value of `commentbegin`",
                             "type": "boolean",
-                            "default": true
+							"default": true,
+							"scope": "resource"
                         },
                         "autoInsertHeader": {
                             "description": "If true then file header insertion is triggered by typing the value of `headerbegin`",
                             "type": "boolean",
-                            "default": true
+							"default": true,
+							"scope": "resource"
                         },
                         "autoPrefixOnEnter": {
                             "description": "If true then onEnterRules are added",
                             "type": "boolean",
-                            "default": true
+							"default": true,
+							"scope": "resource"
                         },
                         "neverAskTemplate": {
                             "description": "If true then never asks to select default template via setup wizard",
                             "type": "boolean",
-                            "default": false
+							"default": false,
+							"scope": "resource"
                         },
                         "paramFormat": {
                             "description": "Format of the @param tag, using ${name} and ${type} fields",
                             "type": "string",
-                            "default": "@param ${name} - "
+							"default": "@param ${name} - ",
+							"scope": "resource"
                         },
                         "returnFormat": {
                             "description": "Format of the @return tag, using ${type} field",
                             "type": "string",
-                            "default": "@return ${type}"
+							"default": "@return ${type}",
+							"scope": "resource"
                         },
 						"allowOptionalArgs": {
 							"description": "If true, allows the '?' prefix for optional function args in @param tag",
 							"type": "boolean",
-							"default": false
+							"default": false,
+							"scope": "resource"
 						},
                         "commentprefix": {
                             "description": "Per-line comment prefix",
                             "type": "string",
-                            "default": " *  "
+							"default": " *  ",
+							"scope": "resource"
                         },
                         "commentbegin": {
                             "description": "Start of function comment",
                             "type": "string",
-                            "default": "/**"
+							"default": "/**",
+							"scope": "resource"
                         },
                         "commentend": {
                             "description": "End of function comment",
                             "type": "string",
-                            "default": " */"
+							"default": " */",
+							"scope": "resource"
                         },
                         "commentdescription": {
                             "description": "Initial text added to comment description",
                             "type": "string",
-                            "default": "[Description]"
+							"default": "[Description]",
+							"scope": "resource"
                         },
                         "alwaysMultiline": {
                             "description": "If true then all comments are multiline, else non-functions are single line",
                             "type": "boolean",
-                            "default": true
+							"default": true,
+							"scope": "resource"
                         },
                         "headerprefix": {
                             "description": "Per-line header prefix",
                             "type": "string",
-                            "default": " *"
+							"default": " *",
+							"scope": "resource"
                         },
                         "headerbegin": {
                             "description": "Start of file header comment",
                             "type": "string",
-                            "default": "/*"
+							"default": "/*",
+							"scope": "resource"
                         },
                         "headerend": {
                             "description": "End of file header comment",
                             "type": "string",
-                            "default": "*/"
+							"default": "*/",
+							"scope": "resource"
                         },
                         "fileheader": {
                             "description": "Settings for insertFileHeader command",
-                            "type": "object",
+							"type": "object",
+							"scope": "resource",
                             "properties": {
                                 "params": {
                                     "description": "Parameters used to populate '${}' fields in a template. Contains groups of params keyed by language id",
-                                    "type": "object",
+									"type": "object",
+									"scope": "resource",
                                     "properties": {
                                         "*": {
                                             "description": "Default params used regardless of which language id is used by the current editor",
-                                            "type": "object",
+											"type": "object",
+											"scope": "resource",
                                             "additionalProperties": {
                                                 "oneOf": [
                                                     {
@@ -165,7 +184,8 @@
                                         }
                                     },
                                     "additionalProperties": {
-                                        "type": "object",
+										"type": "object",
+										"scope": "resource",
                                         "additionalProperties": {
                                             "type": "string"
                                         }
@@ -173,18 +193,21 @@
                                 },
                                 "templates": {
                                     "description": "Templates keyed by language id - each template is an array of strings containing text and optional '${}' fields",
-                                    "type": "object",
+									"type": "object",
+									"scope": "resource",
                                     "properties": {
                                         "*": {
                                             "description": "Default template used when no language id specified",
-                                            "type": "array",
+											"type": "array",
+											"scope": "resource",
                                             "items": {
                                                 "type": "string"
                                             }
                                         }
                                     },
                                     "additionalProperties": {
-                                        "type": "array",
+										"type": "array",
+										"scope": "resource",
                                         "items": {
                                             "type": "string"
                                         }

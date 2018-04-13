@@ -1,0 +1,125 @@
+{
+	"$schema": "http://json-schema.org/schema#",
+	"additionalProperties": false,
+
+	"type": "object",
+	"title": "Codedox configuration",
+	"properties": {
+		"autoInsert": {
+			"description": "If true then insertion is triggered by typing the value of `commentbegin` or `headerbegin`",
+			"type": "boolean",
+			"default": true
+		},
+		"autoInsertHeader": {
+			"description": "If true then file header insertion is triggered by typing the value of `headerbegin`",
+			"type": "boolean",
+			"default": true
+		},
+		"autoPrefixOnEnter": {
+			"description": "If true then onEnterRules are added",
+			"type": "boolean",
+			"default": true
+		},
+		"neverAskTemplate": {
+			"description": "If true then never asks to select default template",
+			"type": "boolean",
+			"default": false
+		},
+		"paramFormat": {
+			"description": "Format of the @param tag, using ${name} and ${type} fields",
+			"type": "string",
+			"default": "@param ${name} - "
+		},
+		"returnFormat": {
+			"description": "Format of the @return tag, using ${type} field",
+			"type": "string",
+			"default": "@return ${type}"
+		},
+		"allowOptionalArgs": {
+			"description": "If true, allows the '?' prefix for optional function args in @param tag",
+			"type": "boolean",
+			"default": false
+		},
+		"commentprefix": {
+			"description": "Per-line comment prefix",
+			"type": "string",
+			"default": " *  "
+		},
+		"commentbegin": {
+			"description": "Start of function comment",
+			"type": "string",
+			"default": "/**"
+		},
+		"commentend": {
+			"description": "End of function comment",
+			"type": "string",
+			"default": " */"
+		},
+		"commentdescription": {
+			"description": "Initial text added to comment description",
+			"type": "string",
+			"default": "[Description]"
+		},
+		"alwaysMultiline": {
+			"description": "If true then all comments are multiline, else non-functions are single line",
+			"type": "boolean",
+			"default": true
+		},
+		"headerprefix": {
+			"description": "Per-line header prefix",
+			"type": "string",
+			"default": " *"
+		},
+		"headerbegin": {
+			"description": "Start of file header comment",
+			"type": "string",
+			"default": "/*"
+		},
+		"headerend": {
+			"description": "End of file header comment",
+			"type": "string",
+			"default": "*/"
+		},
+		"fileheader": {
+			"description": "Settings for insertFileHeader command",
+			"type": "object",
+			"properties": {
+				"params": {
+					"description": "Parameters used to populate '${}' fields in a template. Contains groups of params keyed by language id",
+					"type": "object",
+					"properties": {
+						"*": {
+							"description": "Default params used regardless of which language id is used by the current editor",
+							"type": "object",
+							"additionalProperties": {
+								"oneOf": [
+									{"type": "string"},
+									{"type": "array", "items": {"type": "string"}}
+								]
+							}
+						}
+					},
+					"additionalProperties": {
+						"type": "object",
+						"additionalProperties": {"type": "string"}
+					}
+				},
+				"templates": {
+					"description": "Templates keyed by language id - each template is an array of strings containing text and optional '${}' fields",
+					"type": "object",
+					"properties": {
+						"*": {
+							"description": "Default template used when no language id specified",
+							"type": "array",
+							"items": {"type": "string"}
+						}
+					},
+					"additionalProperties": {
+						"type": "array",
+						"items": {"type": "string"}
+					}
+				}
+			}
+		}
+	}
+}

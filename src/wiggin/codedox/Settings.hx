@@ -23,6 +23,7 @@ package wiggin.codedox;
 import vscode.WorkspaceConfiguration;
 import wiggin.util.StringUtil;
 import wiggin.util.DynamicObject;
+import wiggin.codedox.Resource;
 
 private typedef Context = {strLanguage:String, config:WorkspaceConfiguration}
 
@@ -52,6 +53,9 @@ class Settings
 	public var strHeaderTrigger(default,null) : String;
 	public var allowOptionalArgs(default,null) : Bool;
 
+	/** The resource uri for which these settings were loaded. */
+	public var resourceUri(default,null) : vscode.Uri;
+
 	/** The language id for which these settings were loaded. */
 	public var strLanguage(default,null) : String;
 	
@@ -62,23 +66,19 @@ class Settings
 	public static var LANGUAGES = CodeDox.EXTENSION_NAME + ".languages";
 
 	/**
-	 *  Fetches a `Settings` object based on the specified language.
-	 *  @param strLanguage - the language used to filter config, e.g. "haxe". Can null 
-	 *                       which means only global or default value is returned.
+	 *  Fetches a `Settings` object based on the specified resource uri and language.
+	 *  @param resource - the `Resource` for which setting will be fetched.
 	 *  @return a new or previously cached `Settings` object
 	 */
-	public static function fetch(strLanguage:Null<String>) : Settings
+	public static function fetch(resource:Resource) : Settings
 	{
-		if(strLanguage == null)
-		{
-			strLanguage = "<none>";
-		}
+		var strKey = resource.toString();
 
-		var settings:Settings = s_mapCache.get(strLanguage);
+		var settings:Settings = s_mapCache.get(strKey);
 		if(settings == null)
 		{
-			settings = new Settings(strLanguage);
-			s_mapCache.set(strLanguage, settings);
+			settings = new Settings(resource);
+			s_mapCache.set(strKey, settings);
 		}
 		return settings;
 	}
@@ -93,11 +93,11 @@ class Settings
 
 	/**
 	 *  Constructor
-	 *  @param strLanguage - the language id to provide settings for.
+	 *  @param resource - the `Resource` to fetch settings for.
 	 */
-	private function new(strLanguage:String)
+	private function new(resource:Resource)
 	{
-		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration();
+		var config:WorkspaceConfiguration = Vscode.workspace.getConfiguration(null, resource.uri);
 		var ctx:Context = {strLanguage:strLanguage, config:config};
 
 		var strCommentBegin = getProp("commentbegin", "/**", ctx);
@@ -105,7 +105,8 @@ class Settings
 		var strAutoClose = getAutoClosingClose(strCommentBegin, false);
 		var strAutoCloseAlt = getAutoClosingClose(strCommentBegin, true);
 
-		this.strLanguage = strLanguage;
+		this.resourceUri = resource.uri;
+		this.strLanguage = resource.languageId;
 		this.autoPrefixOnEnter = getProp("autoPrefixOnEnter", true, ctx);
 		this.autoInsert = getProp("autoInsert", true, ctx);
 		this.autoInsertHeader = getProp("autoInsertHeader", true, ctx);

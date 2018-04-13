@@ -30,6 +30,7 @@ import wiggin.util.MathUtil;
 import wiggin.util.ParseUtil;
 import wiggin.util.ParseUtil.Direction;
 import wiggin.util.ParamUtil;
+import wiggin.codedox.Resource;
 
 private typedef Param = {name:String, type:String}
 private typedef ComposeInfo = {params:Null<Array<Param>>, retType:Null<String>, 
@@ -92,7 +93,7 @@ class Commenter
 		range = doc.validateRange(range);
 		var strText = doc.getText(range);
 
-		var settings = Settings.fetch(doc.languageId);
+		var settings = Settings.fetch(new Resource(doc.uri, doc.languageId));
 
 		// Match the first method declaration. Group 1 will contain the
 		// parameters, group 2 will contain the return type.
@@ -114,7 +115,7 @@ class Commenter
 				var strIndent = ParseUtil.getIndent(doc, posMatch);
 				
 				// Parse the method parameters.
-				var arrParams = parseParams(strParams, doc.languageId);
+				var arrParams = parseParams(strParams, settings);
 
 				#if debug
 				var sb = new StringBuf();
@@ -274,16 +275,16 @@ class Commenter
 	 *  Parses the method parameters and returns an array of `Param` objects.
 	 *
 	 *  @param strParams - string to parse
-	 *  @param strLanguageId - the language id of the current document 
+	 *  @param settings - the `Settings` 
 	 *  @return Array<Param> - an array of Params. Might be empty. 
 	 */
-	private static function parseParams(strParams:String, strLanguageId:String) : Array<Param>
+	private static function parseParams(strParams:String, settings:Settings) : Array<Param>
 	{
 		var strParamSeparator:String;
 		var idxName:Int;
 		var idxType:Int;
 
-		switch(strLanguageId)
+		switch(settings.strLanguage)
 		{
 			case "haxe":
 				strParamSeparator = ":";
@@ -298,7 +299,6 @@ class Commenter
 
 		strParams = StringUtil.toEmptyIfNull(strParams);
 		var arrParams:Array<Param> = [];
-		var bAllowOptional = Settings.fetch(strLanguageId).allowOptionalArgs;
 
 		var arr = ParseUtil.splitByCommas(strParams);
 		for(item in arr)
@@ -315,7 +315,7 @@ class Commenter
 				strName = StringTools.trim(strName);
 
 				// Possibly remove "?" from optional params.
-				if(!bAllowOptional && StringTools.startsWith(strName, "?"))
+				if(!settings.allowOptionalArgs && StringTools.startsWith(strName, "?"))
 				{
 					strName = strName.substr(1);
 				}
