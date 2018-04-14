@@ -4,6 +4,8 @@
 		"description": "GNU Affero General Public License",
 		"text": [
 			"${headerbegin}",
+			"${headerprefix} GNU Affero General Public License",
+			"${headerprefix}",
 			"${headerprefix} Copyright (c) ${year} ${company}",
 			"${headerprefix}",
 			"${headerprefix} This program is free software: you can redistribute it and/or modify",
@@ -25,6 +27,8 @@
 		"description": "Apache License, Version 2.0",
 		"text": [
 			"${headerbegin}",
+			"${headerprefix} Apache License, Version 2.0",
+			"${headerprefix}",
 			"${headerprefix} Copyright (c) ${year} ${company}",
 			"${headerprefix}",
 			"${headerprefix} Licensed under the Apache License, Version 2.0 (the \"License\");",
@@ -44,6 +48,8 @@
 		"description": "GNU General Public License, Version 3.0",
 		"text": [
 			"${headerbegin}",
+			"${headerprefix} GNU General Public License, Version 3.0",
+			"${headerprefix}",
 			"${headerprefix} Copyright (c) ${year} ${company}",
 			"${headerprefix}",
 			"${headerprefix} This program is free software: you can redistribute it and/or modify",
@@ -65,6 +71,8 @@
 		"description": "MIT License",
 		"text": [
 			"${headerbegin}",
+			"${headerprefix} MIT License",
+			"${headerprefix}",
 			"${headerprefix} Copyright (c) ${year} ${company}",
 			"${headerprefix}",
 			"${headerprefix} Permission is hereby granted, free of charge, to any person obtaining a copy of",
@@ -91,6 +99,8 @@
 		"description": "Mozilla Public License, Version 2.0",
 		"text": [
 			"${headerbegin}",
+			"${headerprefix} Mozilla Public License, Version 2.0",
+			"${headerprefix}",
 			"${headerprefix} Copyright (c) ${year} ${company}",
 			"${headerprefix}",
 			"${headerprefix} This Source Code Form is subject to the terms of the Mozilla Public",
