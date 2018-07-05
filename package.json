@@ -56,7 +56,7 @@
         ],
         "configuration": {
             "type": "object",
-            "title": "Codedox configuration",
+            "title": "Codedox",
             "properties": {
                 "codedox": {
                     "description": "Codedox settings.",
