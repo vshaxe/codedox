@@ -6,14 +6,14 @@
 		"paramFormat": "@param ${name} ",
 		"returnFormat": "@return ${type}",
 		"allowOptionalArgs": false,
-		"commentprefix": "* ",
+		"commentprefix": " * ",
 		"commentbegin": "/**",
-		"commentend": "*/",
+		"commentend": " */",
 		"commentdescription": "[Description]",
 		"alwaysMultiline": true,
-		"headerprefix": "*",
+		"headerprefix": " *",
 		"headerbegin": "/*",
-		"headerend": "*/",
+		"headerend": " */",
 		"fileheader": {
 			"params": {
 				"*": {

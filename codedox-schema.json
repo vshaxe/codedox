@@ -34,7 +34,7 @@
 				"paramFormat": {
 					"description": "Format of the @param tag, using ${name} and ${type} fields",
 					"type": "string",
-					"default": "@param ${name} - "
+					"default": "@param ${name} "
 				},
 				"returnFormat": {
 					"description": "Format of the @return tag, using ${type} field",
@@ -49,7 +49,7 @@
 				"commentprefix": {
 					"description": "Per-line comment prefix",
 					"type": "string",
-					"default": " *  "
+					"default": " * "
 				},
 				"commentbegin": {
 					"description": "Start of function comment",
@@ -74,7 +74,7 @@
 				"headerprefix": {
 					"description": "Per-line header prefix",
 					"type": "string",
-					"default": " *"
+					"default": "*"
 				},
 				"headerbegin": {
 					"description": "Start of file header comment",
@@ -84,7 +84,7 @@
 				"headerend": {
 					"description": "End of file header comment",
 					"type": "string",
-					"default": "*/"
+					"default": " */"
 				},
 				"fileheader": {
 					"description": "Settings for insertFileHeader command",

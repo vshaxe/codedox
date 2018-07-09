@@ -61,13 +61,13 @@ If you want to create a custom license/copyright template or want to change how 
 	"returnFormat": "@return ${type}", // supports ${type}, plus built-in params
 	"allowOptionalArgs": false, // false strips the '?' prefix from optional function args
 	"alwaysMultiline": true, // if false non-functions (types) are single line
-    "commentprefix": "* ",
+    "commentprefix": " * ",
     "commentbegin": "/**",
-    "commentend": "*/",
+    "commentend": " */",
     "commentdescription": "[Description]",
     "headerprefix": "*",
     "headerbegin": "/*",
-    "headerend": "*/",
+    "headerend": " */",
     "fileheader": {
       "params": {
         "*": {

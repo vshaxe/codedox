@@ -101,7 +101,7 @@
                         "commentprefix": {
                             "description": "Per-line comment prefix",
                             "type": "string",
-                            "default": "* "
+                            "default": " * "
                         },
                         "commentbegin": {
                             "description": "Start of function comment",
@@ -111,7 +111,7 @@
                         "commentend": {
                             "description": "End of function comment",
                             "type": "string",
-                            "default": "*/"
+                            "default": " */"
                         },
                         "commentdescription": {
                             "description": "Initial text added to comment description",
@@ -136,7 +136,7 @@
                         "headerend": {
                             "description": "End of file header comment",
                             "type": "string",
-                            "default": "*/"
+                            "default": " */"
                         },
                         "fileheader": {
                             "description": "Settings for insertFileHeader command",

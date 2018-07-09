@@ -9,8 +9,17 @@ class Test
 		trace(getMessage("Hello", 2));
 	}
 
+	/**
+	 * Formats a simple message.
+	 * @param str the string to prefix
+	 * @param num the number suffix
+	 * @return formatted string
+	 * @throws exp if str is null 
+	 * @see some other stuff
+	 */
 	private static function getMessage(str:String, num:Int) : String
 	{
+		if (str == null) throw "str can't be null";
 		return "message: " + str + num; 
 	}
 
