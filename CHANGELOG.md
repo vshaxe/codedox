@@ -1,5 +1,9 @@
 # Codedox change log
 
+## 1.2.9
+
+* Revert to space prefixing comment body.
+
 ## 1.2.8
 
 * Change default comment prefix and formatting to better display in vshaxe and Dox. 
