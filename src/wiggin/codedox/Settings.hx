@@ -107,11 +107,11 @@ class Settings
 		this.autoPrefixOnEnter = getProp("autoPrefixOnEnter", true, ctx);
 		this.autoInsert = getProp("autoInsert", true, ctx);
 		this.autoInsertHeader = getProp("autoInsertHeader", true, ctx);
-		this.strParamFormat = getProp("paramFormat", "@param ${name} - ", ctx);
+		this.strParamFormat = getProp("paramFormat", "@param ${name} ", ctx);
 		this.strReturnFormat = getProp("returnFormat", "@return ${type}", ctx);
 		this.strCommentBegin = strCommentBegin;
-		this.strCommentEnd = getProp("commentend", " */", ctx);
-		this.strCommentPrefix = getProp("commentprefix", " *  ", ctx);
+		this.strCommentEnd = getProp("commentend", "*/", ctx);
+		this.strCommentPrefix = getProp("commentprefix", "* ", ctx);
 		this.strCommentDescription = getProp("commentdescription", "[Description]", ctx);
 		this.strCommentToken = "[]";
 		this.strCommentTrigger = StringUtil.right(strCommentBegin, 1);
@@ -120,7 +120,7 @@ class Settings
 		this.strAutoClosingCloseAlt = (strAutoCloseAlt != null) ? strAutoCloseAlt : "";
 		this.strHeaderBegin = getProp("headerbegin", "/*", ctx);
 		this.strHeaderEnd = getProp("headerend", "*/", ctx);
-		this.strHeaderPrefix = getProp("headerprefix", " *", ctx);
+		this.strHeaderPrefix = getProp("headerprefix", "*", ctx);
 		this.strHeaderTrigger = StringUtil.right(strHeaderBegin, 1);
 		this.allowOptionalArgs = getProp("allowOptionalArgs", false, ctx);
 	}

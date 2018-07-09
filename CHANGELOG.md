@@ -1,5 +1,9 @@
 # Codedox change log
 
+## 1.2.8
+
+* Change default comment prefix and formatting to better display in vshaxe and Dox. 
+
 ## 1.2.7
 
 * Fixed broken indentation with a `commentprefix` that only contains whitespace; see [issue 26](https://github.com/vshaxe/codedox/issues/26) 

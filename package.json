@@ -2,7 +2,7 @@
     "name": "codedox",
     "displayname": "Codedox for Haxe",
     "description": "JSDoc-style comments for Haxe. @param and @return tags, plus customizable file header license and copyright comments.",
-    "version": "1.2.7",
+    "version": "1.2.8",
     "publisher": "wiggin77",
     "license": "(MIT) View license in LICENSE.md",
     "engines": {
@@ -86,7 +86,7 @@
                         "paramFormat": {
                             "description": "Format of the @param tag, using ${name} and ${type} fields",
                             "type": "string",
-                            "default": "@param ${name} - "
+                            "default": "@param ${name} "
                         },
                         "returnFormat": {
                             "description": "Format of the @return tag, using ${type} field",
@@ -101,7 +101,7 @@
                         "commentprefix": {
                             "description": "Per-line comment prefix",
                             "type": "string",
-                            "default": " *  "
+                            "default": "* "
                         },
                         "commentbegin": {
                             "description": "Start of function comment",
@@ -111,7 +111,7 @@
                         "commentend": {
                             "description": "End of function comment",
                             "type": "string",
-                            "default": " */"
+                            "default": "*/"
                         },
                         "commentdescription": {
                             "description": "Initial text added to comment description",
@@ -126,7 +126,7 @@
                         "headerprefix": {
                             "description": "Per-line header prefix",
                             "type": "string",
-                            "default": " *"
+                            "default": "*"
                         },
                         "headerbegin": {
                             "description": "Start of file header comment",
