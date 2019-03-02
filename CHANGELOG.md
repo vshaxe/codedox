@@ -1,5 +1,10 @@
 # Codedox change log
 
+## 1.3.0
+
+* Update hxnodejs and node.js to fix warning "requires node.js version 4.0.0 or higher"
+* Compile with Haxe 4.0.0rc1
+
 ## 1.2.9
 
 * Revert to space prefixing comment body.

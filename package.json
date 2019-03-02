@@ -2,7 +2,7 @@
     "name": "codedox",
     "displayname": "Codedox for Haxe",
     "description": "JSDoc-style comments for Haxe. @param and @return tags, plus customizable file header license and copyright comments.",
-    "version": "1.2.9",
+    "version": "1.3.0",
     "publisher": "wiggin77",
     "license": "(MIT) View license in LICENSE.md",
     "engines": {
