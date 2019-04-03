@@ -1,200 +1,205 @@
 {
-    "name": "codedox",
-    "displayname": "Codedox for Haxe",
-    "description": "JSDoc-style comments for Haxe. @param and @return tags, plus customizable file header license and copyright comments.",
-    "version": "1.3.0",
-    "publisher": "wiggin77",
-    "license": "(MIT) View license in LICENSE.md",
-    "engines": {
-        "vscode": "^1.4.0"
-    },
-    "icon": "images/codedox-logo.png",
-    "galleryBanner": {
-        "color": "#A84B38",
-        "theme": "dark"
-    },
-    "categories": [
-        "Other"
-    ],
-    "keywords": [
-        "Haxe",
-        "comments",
-        "JSDoc",
-        "license",
-        "copyright"
-    ],
-    "bugs": "https://github.com/vshaxe/codedox/issues",
-    "homepage": "https://github.com/vshaxe/codedox/blob/master/README.md",
-    "repository": {
-        "type": "git",
-        "url": "https://github.com/vshaxe/codedox"
-    },
-    "activationEvents": [
-        "onLanguage:haxe",
-        "onCommand:codedox.setup",
-        "onCommand:codedox.fileheader.insert",
-        "onCommand:codedox.comment.insert"
-    ],
-    "main": "./out/codedox",
-    "scripts": {
-        "vscode:prepublish": "haxe build-release.hxml"
-    },
-    "contributes": {
-        "commands": [
-            {
-                "command": "codedox.setup",
-                "title": "Codedox: Setup minimal config"
-            },
-            {
-                "command": "codedox.fileheader.insert",
-                "title": "Codedox: Insert file header"
-            },
-            {
-                "command": "codedox.comment.insert",
-                "title": "Codedox: Insert comment at cursor"
-            }
-        ],
-        "configuration": {
-            "type": "object",
-            "title": "Codedox",
-            "properties": {
-                "codedox": {
-                    "description": "Codedox settings.",
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "autoInsert": {
-                            "description": "If true then function comment insertion is triggered by typing the value of `commentbegin`",
-                            "type": "boolean",
-                            "default": true
-                        },
-                        "autoInsertHeader": {
-                            "description": "If true then file header insertion is triggered by typing the value of `headerbegin`",
-                            "type": "boolean",
-                            "default": true
-                        },
-                        "autoPrefixOnEnter": {
-                            "description": "If true then onEnterRules are added",
-                            "type": "boolean",
-                            "default": true
-                        },
-                        "neverAskTemplate": {
-                            "description": "If true then never asks to select default template via setup wizard",
-                            "type": "boolean",
-                            "default": false
-                        },
-                        "paramFormat": {
-                            "description": "Format of the @param tag, using ${name} and ${type} fields",
-                            "type": "string",
-                            "default": "@param ${name} "
-                        },
-                        "returnFormat": {
-                            "description": "Format of the @return tag, using ${type} field",
-                            "type": "string",
-                            "default": "@return ${type}"
-                        },
+	"name": "codedox",
+	"displayname": "Codedox for Haxe",
+	"description": "JSDoc-style comments for Haxe. @param and @return tags, plus customizable file header license and copyright comments.",
+	"version": "1.3.0",
+	"publisher": "wiggin77",
+	"license": "(MIT) View license in LICENSE.md",
+	"engines": {
+		"vscode": "^1.4.0"
+	},
+	"icon": "images/codedox-logo.png",
+	"galleryBanner": {
+		"color": "#A84B38",
+		"theme": "dark"
+	},
+	"categories": [
+		"Other"
+	],
+	"keywords": [
+		"Haxe",
+		"comments",
+		"JSDoc",
+		"license",
+		"copyright"
+	],
+	"bugs": "https://github.com/vshaxe/codedox/issues",
+	"homepage": "https://github.com/vshaxe/codedox/blob/master/README.md",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/vshaxe/codedox"
+	},
+	"activationEvents": [
+		"onLanguage:haxe",
+		"onCommand:codedox.setup",
+		"onCommand:codedox.fileheader.insert",
+		"onCommand:codedox.comment.insert"
+	],
+	"main": "./out/codedox",
+	"scripts": {
+		"vscode:prepublish": "haxe build-release.hxml"
+	},
+	"contributes": {
+		"commands": [
+			{
+				"command": "codedox.setup",
+				"title": "Codedox: Setup minimal config"
+			},
+			{
+				"command": "codedox.fileheader.insert",
+				"title": "Codedox: Insert file header"
+			},
+			{
+				"command": "codedox.comment.insert",
+				"title": "Codedox: Insert comment at cursor"
+			}
+		],
+		"configuration": {
+			"type": "object",
+			"title": "Codedox",
+			"properties": {
+				"codedox": {
+					"description": "Codedox settings.",
+					"type": "object",
+					"additionalProperties": false,
+					"properties": {
+						"autoInsert": {
+							"description": "If true then function comment insertion is triggered by typing the value of `commentbegin`",
+							"type": "boolean",
+							"default": true
+						},
+						"autoInsertHeader": {
+							"description": "If true then file header insertion is triggered by typing the value of `headerbegin`",
+							"type": "boolean",
+							"default": true
+						},
+						"autoPrefixOnEnter": {
+							"description": "If true then onEnterRules are added",
+							"type": "boolean",
+							"default": true
+						},
+						"neverAskTemplate": {
+							"description": "If true then never asks to select default template via setup wizard",
+							"type": "boolean",
+							"default": false
+						},
+						"paramFormat": {
+							"description": "Format of the @param tag, using ${name} and ${type} fields",
+							"type": "string",
+							"default": "@param ${name} "
+						},
+						"returnFormat": {
+							"description": "Format of the @return tag, using ${type} field",
+							"type": "string",
+							"default": "@return ${type}"
+						},
 						"allowOptionalArgs": {
 							"description": "If true, allows the '?' prefix for optional function args in @param tag",
 							"type": "boolean",
 							"default": false
 						},
-                        "commentprefix": {
-                            "description": "Per-line comment prefix",
-                            "type": "string",
-                            "default": " * "
-                        },
-                        "commentbegin": {
-                            "description": "Start of function comment",
-                            "type": "string",
-                            "default": "/**"
-                        },
-                        "commentend": {
-                            "description": "End of function comment",
-                            "type": "string",
-                            "default": " */"
-                        },
-                        "commentdescription": {
-                            "description": "Initial text added to comment description",
-                            "type": "string",
-                            "default": "[Description]"
-                        },
-                        "alwaysMultiline": {
-                            "description": "If true then all comments are multiline, else non-functions are single line",
-                            "type": "boolean",
-                            "default": true
-                        },
-                        "headerprefix": {
-                            "description": "Per-line header prefix",
-                            "type": "string",
-                            "default": "*"
-                        },
-                        "headerbegin": {
-                            "description": "Start of file header comment",
-                            "type": "string",
-                            "default": "/*"
-                        },
-                        "headerend": {
-                            "description": "End of file header comment",
-                            "type": "string",
-                            "default": " */"
-                        },
-                        "fileheader": {
-                            "description": "Settings for insertFileHeader command",
-                            "type": "object",
-                            "properties": {
-                                "params": {
-                                    "description": "Parameters used to populate '${}' fields in a template. Contains groups of params keyed by language id",
-                                    "type": "object",
-                                    "properties": {
-                                        "*": {
-                                            "description": "Default params used regardless of which language id is used by the current editor",
-                                            "type": "object",
-                                            "additionalProperties": {
-                                                "oneOf": [
-                                                    {
-                                                        "type": "string"
-                                                    },
-                                                    {
-                                                        "type": "array",
-                                                        "items": {
-                                                            "type": "string"
-                                                        }
-                                                    }
-                                                ]
-                                            }
-                                        }
-                                    },
-                                    "additionalProperties": {
-                                        "type": "object",
-                                        "additionalProperties": {
-                                            "type": "string"
-                                        }
-                                    }
-                                },
-                                "templates": {
-                                    "description": "Templates keyed by language id - each template is an array of strings containing text and optional '${}' fields",
-                                    "type": "object",
-                                    "properties": {
-                                        "*": {
-                                            "description": "Default template used when no language id specified",
-                                            "type": "array",
-                                            "items": {
-                                                "type": "string"
-                                            }
-                                        }
-                                    },
-                                    "additionalProperties": {
-                                        "type": "array",
-                                        "items": {
-                                            "type": "string"
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
+						"commentprefix": {
+							"description": "Per-line comment prefix",
+							"type": "string",
+							"default": " * "
+						},
+						"commentbegin": {
+							"description": "Start of function comment",
+							"type": "string",
+							"default": "/**"
+						},
+						"commentend": {
+							"description": "End of function comment",
+							"type": "string",
+							"default": " */"
+						},
+						"commentdescription": {
+							"description": "Initial text added to comment description",
+							"type": "string",
+							"default": "[Description]"
+						},
+						"alwaysMultiline": {
+							"description": "If true then all comments are multiline, else non-functions are single line",
+							"type": "boolean",
+							"default": true
+						},
+						"headerprefix": {
+							"description": "Per-line header prefix",
+							"type": "string",
+							"default": "*"
+						},
+						"headerbegin": {
+							"description": "Start of file header comment",
+							"type": "string",
+							"default": "/*"
+						},
+						"headerend": {
+							"description": "End of file header comment",
+							"type": "string",
+							"default": " */"
+						},
+						"fileheader": {
+							"description": "Settings for insertFileHeader command",
+							"type": "object",
+							"properties": {
+								"params": {
+									"description": "Parameters used to populate '${}' fields in a template. Contains groups of params keyed by language id",
+									"type": "object",
+									"properties": {
+										"*": {
+											"description": "Default params used regardless of which language id is used by the current editor",
+											"type": "object",
+											"additionalProperties": {
+												"oneOf": [
+													{
+														"type": "string"
+													},
+													{
+														"type": "array",
+														"items": {
+															"type": "string"
+														}
+													}
+												]
+											}
+										}
+									},
+									"additionalProperties": {
+										"type": "object",
+										"additionalProperties": {
+											"type": "string"
+										}
+									}
+								},
+								"templates": {
+									"description": "Templates keyed by language id - each template is an array of strings containing text and optional '${}' fields",
+									"type": "object",
+									"properties": {
+										"*": {
+											"description": "Default template used when no language id specified",
+											"type": "array",
+											"items": {
+												"type": "string"
+											}
+										}
+									},
+									"additionalProperties": {
+										"type": "array",
+										"items": {
+											"type": "string"
+										}
+									}
+								}
+							}
+						}
+					}
+				}
+			}
+		}
+	},
+	"__metadata": {
+		"id": "31559b1f-ac25-4830-bfbc-eccf24c75452",
+		"publisherDisplayName": "wiggin77",
+		"publisherId": "577d2b04-bb43-4547-901e-a50f7565b354"
+	}
 }
