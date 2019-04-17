@@ -21,7 +21,7 @@
  */
 package wiggin.codedox;
 
-import js.Promise;
+import js.lib.Promise;
 import vscode.ExtensionContext;
 import vscode.TextEditor;
 import vscode.TextEditorEdit;

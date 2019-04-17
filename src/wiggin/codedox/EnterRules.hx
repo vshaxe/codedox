@@ -23,6 +23,7 @@ package wiggin.codedox;
 import vscode.OnEnterRule;
 import wiggin.util.RegExUtil;
 import wiggin.util.StringUtil;
+import js.lib.RegExp;
 
 /** 
  *  Provides `OnEnterRules` for language configurations.
@@ -51,33 +52,33 @@ class EnterRules
 				// e.g. /** | */
 				// beforeText: ^\s*\/\*\*(?!\/)([^\*]|\*(?!\/))*$
 				//  afterText: ^\s*\*\/$
-				beforeText: new js.RegExp("^\\s*" + cbegin + "(?!"+ cend + ")([^" + cend1 + "]|" + cend1 + "(?!" + cend2 + "))*$"),
-				afterText: new js.RegExp("^\\s*" + cend + "$"),
+				beforeText: new RegExp("^\\s*" + cbegin + "(?!"+ cend + ")([^" + cend1 + "]|" + cend1 + "(?!" + cend2 + "))*$"),
+				afterText: new RegExp("^\\s*" + cend + "$"),
 				action: { indentAction: vscode.IndentAction.IndentOutdent, appendText: strCommentPrefix }
 			},
 			{
 				// e.g. /** ...|
 				// beforeText: ^\s*\/\*\*(?!\/)([^\*]|\*(?!\/))*$
-				beforeText: new js.RegExp("^\\s*" + cbegin + "(?!"+ cend + ")([^" + cend1 + "]|" + cend1 + "(?!" + cend2 + "))*$"),
+				beforeText: new RegExp("^\\s*" + cbegin + "(?!"+ cend + ")([^" + cend1 + "]|" + cend1 + "(?!" + cend2 + "))*$"),
 				action: { indentAction: vscode.IndentAction.None, appendText: strCommentPrefix }
 			},
 			{
 				// e.g.  * ...|
 				// beforeText: ^(\t|(\ \ ))*\ \*(\ ([^\*]|\*(?!\/))*)?$
-				beforeText: new js.RegExp("^(\\t|(\\ ))(\\t|(\\ ))*" + cprefix + "(\\ " + "([^" + cend1 + "]|" + cend1 + "(?!" + cend2 + "))*)?$"),
+				beforeText: new RegExp("^(\\t|(\\ ))(\\t|(\\ ))*" + cprefix + "(\\ " + "([^" + cend1 + "]|" + cend1 + "(?!" + cend2 + "))*)?$"),
 				action: { indentAction: vscode.IndentAction.None, appendText: StringTools.ltrim(strCommentPrefix) }
 			},
 #if blap
 			{
 				// e.g.  */|
 				// beforeText: ^(\t|(\ \ ))*\ \*\/\s*$
-				beforeText: new js.RegExp("^(\\t|(\\ \\ ))*\\ \\*\\/\\s*$"),
+				beforeText: new RegExp("^(\\t|(\\ \\ ))*\\ \\*\\/\\s*$"),
 				action: { indentAction: vscode.IndentAction.None, removeText: 1 }
 			},
 			{
 				// e.g.  *-----*/|
 				// beforeText: ^(\t|(\ \ ))*\ \*[^/]*\*\/\s*$
-				beforeText: new js.RegExp("^(\\t|(\\ \\ ))*\\ \\*[^/]*\\*\\/\\s*$"),
+				beforeText: new RegExp("^(\\t|(\\ \\ ))*\\ \\*[^/]*\\*\\/\\s*$"),
 				action: { indentAction: vscode.IndentAction.None, removeText: 1 }
 			}
 #end					

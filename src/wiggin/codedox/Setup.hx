@@ -21,7 +21,7 @@
  */
 package wiggin.codedox;
 
-import js.Promise;
+import js.lib.Promise;
 import vscode.QuickPickItem;
 import wiggin.codedox.License;
 import wiggin.util.ConfigUtil;
@@ -186,7 +186,7 @@ class Setup
 	 */
 	private function applyConfig(Void) : Promise<Bool>
 	{
-		var prom = new js.Promise(function(resolve,reject) {
+		var prom = new Promise(function(resolve,reject) {
 			var config = Vscode.workspace.getConfiguration();
 			ConfigUtil.update(config, CodeDox.EXTENSION_NAME, m_transaction.obj, m_transaction.scope).then(
 				function(Void)

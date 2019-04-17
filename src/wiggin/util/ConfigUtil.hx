@@ -21,7 +21,7 @@
  */
 package wiggin.util;
 
-import js.Promise;
+import js.lib.Promise;
 import vscode.WorkspaceConfiguration;
 import wiggin.util.StructUtil;
 
