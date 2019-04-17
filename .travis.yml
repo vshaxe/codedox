@@ -1,5 +1,9 @@
-# codedox
 language: haxe
+
 sudo: false
+
+haxe:
+  - development
+
 hxml:
   - build-release.hxml
