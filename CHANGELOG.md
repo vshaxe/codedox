@@ -1,5 +1,9 @@
 # Codedox change log
 
+## 1.3.1
+
+* replicate vshaxe onEnter rules as codedox overwrites them
+
 ## 1.3.0
 
 * Update hxnodejs and node.js to fix warning "requires node.js version 4.0.0 or higher"

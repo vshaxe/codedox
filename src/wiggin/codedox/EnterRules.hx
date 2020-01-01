@@ -80,8 +80,15 @@ class EnterRules
 				// beforeText: ^(\t|(\ \ ))*\ \*[^/]*\*\/\s*$
 				beforeText: new RegExp("^(\\t|(\\ \\ ))*\\ \\*[^/]*\\*\\/\\s*$"),
 				action: { indentAction: vscode.IndentAction.None, removeText: 1 }
-			}
-#end					
+			},
+#end				
+			{
+				// from vshaxe; we overwrite any vshaxe rules so any not already handled above
+				// need to be replicated here.
+				beforeText: new RegExp("^\\s*(\\bcase\\s.+:|\\bdefault:)\\s*$"),
+				afterText: new RegExp("^(?!\\s*(\\bcase\\b|\\bdefault\\b))"),
+				action: {indentAction: vscode.IndentAction.Indent},
+			}	
 		];
 		CodeDox.log("onEnter rules for " + settings.strLanguage + ":");
 		CodeDox.log(onEnterRules);

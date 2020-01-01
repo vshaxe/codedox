@@ -39,7 +39,12 @@ class Test
 
 	public function paramInference(foo)
 	{ 
-	
+		switch (true) {
+			case true:  // check indentation when pressing enter `case true:|<enter>`
+			case false:
+		}
+		if (true)
+			false;  // check indentation when pressing enter `false;|<enter>`
 	}
 
 	private function noBraces(i:Int) return switch(i) {
