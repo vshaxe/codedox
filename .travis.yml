@@ -1,7 +1,0 @@
-language: haxe
-dist: xenial
-haxe:
-  - development
-
-hxml:
-  - build-release.hxml

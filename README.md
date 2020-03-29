@@ -1,7 +1,7 @@
 # Codedox for Haxe and Visual Studio Code
 
 [![Current Version](https://vsmarketplacebadge.apphb.com/version/wiggin77.codedox.svg)](https://marketplace.visualstudio.com/items?itemName=wiggin77.codedox)
-[![Build Status](https://travis-ci.org/vshaxe/codedox.svg?branch=master)](https://travis-ci.org/vshaxe/codedox)
+[![CI](https://img.shields.io/github/workflow/status/vshaxe/codedox/CI.svg?logo=github)](https://github.com/vshaxe/codedox/actions?query=workflow%3ACI)
 
 This is an extension for [Visual Studio Code](https://code.visualstudio.com) that helps developers document their [Haxe](http://haxe.org/) code. 
 
