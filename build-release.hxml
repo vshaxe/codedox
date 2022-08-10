@@ -1,4 +1,5 @@
 -cp src
 -lib vscode
 -js out/codedox.js
+-D js-es=6
 wiggin.codedox.CodeDox
