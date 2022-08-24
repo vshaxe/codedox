@@ -7,6 +7,5 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
-    - uses: krdlab/setup-haxe@v1.1.2
-    - run: haxelib install vscode
-    - run: haxe build-release.hxml
+    - run: npm install
+    - run: npx haxe build-release.hxml

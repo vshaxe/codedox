@@ -1,5 +1,9 @@
 # Codedox change log
 
+## 1.3.2
+
+* fixed compatibility issue with vshaxe 2.24.x
+
 ## 1.3.1
 
 * replicate vshaxe onEnter rules as codedox overwrites them
@@ -15,11 +19,11 @@
 
 ## 1.2.8
 
-* Change default comment prefix and formatting to better display in vshaxe and Dox. 
+* Change default comment prefix and formatting to better display in vshaxe and Dox.
 
 ## 1.2.7
 
-* Fixed broken indentation with a `commentprefix` that only contains whitespace; see [issue 26](https://github.com/vshaxe/codedox/issues/26) 
+* Fixed broken indentation with a `commentprefix` that only contains whitespace; see [issue 26](https://github.com/vshaxe/codedox/issues/26)
 
 ## 1.2.6
 
@@ -55,21 +59,24 @@
 * Added option to include/remove the '?' prefix for optional function args in @param tags
 
 ## 1.2.1
+
 * Allow customizable formats for @param and @return tags. [issue 1](https://github.com/vshaxe/codedox/issues/1)
 
 ## 1.2.0
+
 * Setup wizard to create minimal config without editing settings.json by hand
 
 * Include built-in file header license templates
-	* GNU Affero General Public License
-	* Apache License, Version 2.0
-	* GNU General Public License, Version 3.0
-	* MIT License
-	* Mozilla Public License, Version 2.0
+  * GNU Affero General Public License
+  * Apache License, Version 2.0
+  * GNU General Public License, Version 3.0
+  * MIT License
+  * Mozilla Public License, Version 2.0
 * Better support for non-function related comments
-* Documentation added to [README.md](./README.md) 
-	* Built-in file header params
-	* Built-in license templates
+* Documentation added to [README.md](./README.md)
+  * Built-in file header params
+  * Built-in license templates
 
 ## 1.1.0
-- Initial submission to VS Code Marketplace
+
+* Initial submission to VS Code Marketplace
