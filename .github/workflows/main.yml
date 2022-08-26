@@ -9,4 +9,4 @@ jobs:
     - uses: actions/checkout@v2
     - run: npm install
     - run: npx lix download
-    - run: npx haxe build-release.hxml
+    - run: npx lix build-release.hxml
