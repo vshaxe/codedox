@@ -3,6 +3,7 @@
 ## 1.3.2
 
 * fixed compatibility issue with vshaxe 2.24.x
+* switched to Lix for dependency management
 
 ## 1.3.1
 
